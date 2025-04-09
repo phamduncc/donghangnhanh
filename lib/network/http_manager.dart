@@ -35,6 +35,14 @@ class HTTPManager {
     _dio..options = exportOption(baseOptions);
   }
 
+  void updateToken(String? token) {
+    if (token != null) {
+      _dio.options.headers["Authorization"] = "Bearer $token";
+    } else {
+      _dio.options.headers.remove("Authorization");
+    }
+  }
+
   BaseOptions baseOptions = BaseOptions(
     baseUrl: URLConstants.BASE_URL,
     connectTimeout: const Duration(milliseconds: 100000),

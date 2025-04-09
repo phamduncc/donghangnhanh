@@ -107,11 +107,12 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
               ],
             ),
           ),
-          Expanded(
+          Obx(()=>Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: 5,
+              itemCount: controller.orderVideoList.length, 
               itemBuilder: (context, index) {
+                var order = controller.orderVideoList[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(16),
@@ -136,14 +137,14 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                               '15/09/2024 14:41:19',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
-                            Row(
+                            const Row(
                               children: [
-                                const Text('Video đồng hàng: '),
-                                const Text(
+                                Text('Video đồng hàng: '),
+                                Text(
                                   'Đã xoá',
                                   style: TextStyle(color: Colors.blue),
                                 ),
-                                const Icon(Icons.close, size: 16, color: Colors.blue),
+                                Icon(Icons.close, size: 16, color: Colors.blue),
                               ],
                             ),
                           ],
@@ -155,7 +156,7 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                 );
               },
             ),
-          ),
+          ),),
         ],
       ),
 

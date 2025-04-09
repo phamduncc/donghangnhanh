@@ -1,5 +1,6 @@
 import 'package:donghangnhanh/comon/data_center.dart';
 import 'package:donghangnhanh/model/login_request.dart';
+import 'package:donghangnhanh/network/http_manager.dart';
 import 'package:donghangnhanh/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -25,6 +26,7 @@ class LoginController extends GetxController {
         await Get.find<StorageService>().saveToken(result.token);
         await Get.find<StorageService>().saveRefreshToken(result.refreshToken);
         await Get.find<StorageService>().saveUsername(usernameController.text);
+        Get.find<HTTPManager>().updateToken(result.token);
         Get.offNamed('/');
       }
     } catch(e) {

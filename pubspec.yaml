@@ -49,6 +49,7 @@ dependencies:
   permission_handler: ^10.4.3  # For handling permissions
   path: ^1.8.3  # For path manipulation
   video_player: ^2.7.0  # For video playback
+  image_gallery_saver: ^2.0.3
 
 dev_dependencies:
   flutter_test:

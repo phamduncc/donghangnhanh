@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:donghangnhanh/controllers/qr_video_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class QrVideoScreen extends StatefulWidget {
   const QrVideoScreen({Key? key}) : super(key: key);
@@ -31,6 +34,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   int _elapsedSeconds = 0;
   String _selectedOption = "";
   int _remainingSeconds = 600;
+  final controller = Get.put(QrVideoController(apiService: Get.find()));
 
 
   @override
@@ -125,42 +129,65 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
         try {
           // Ngừng QR scanner trước khi chuyển đổi
           if (_qrViewController != null) {
-            // Sử dụng try-catch để bắt lỗi "No barcode view found"
             try {
               await _qrViewController!.pauseCamera();
+              // Thêm thời gian chờ sau khi dừng camera QR
+              // await Future.delayed(const Duration(seconds: 1));
             } catch (e) {
               print("Lỗi khi dừng camera QR: $e");
-              // Không cần xử lý lỗi này, chỉ ghi log
             }
-            _qrViewController!.dispose();
+            
+            try {
+              _qrViewController!.dispose();
+              // Thêm thời gian chờ sau khi giải phóng QR controller
+              // await Future.delayed(const Duration(seconds: 1));
+            } catch (e) {
+              print("Lỗi khi giải phóng QR controller: $e");
+            }
             _qrViewController = null;
           }
         } catch (e) {
           print("Lỗi khi xử lý QR scanner: $e");
+          return; // Thoát nếu có lỗi với QR scanner
+        }
+
+        // Giải phóng camera controller hiện tại nếu có
+        if (_cameraController != null) {
+          try {
+            await _cameraController!.dispose();
+            // Thêm thời gian chờ sau khi giải phóng camera controller
+            await Future.delayed(const Duration(seconds: 1));
+          } catch (e) {
+            print("Lỗi khi giải phóng camera controller: $e");
+          }
+          _cameraController = null;
         }
 
         setState(() {
           _isQrMode = false;
         });
 
-        // Giải phóng camera controller hiện tại và tạo mới
-        if (_cameraController != null) {
-          // await _cameraController!.dispose();
-          _cameraController = null;
-        }
+        try {
+          // Khởi tạo lại camera từ đầu
+          await Future.delayed(const Duration(seconds: 1)); // Thêm delay trước khi khởi tạo
+          await _initCameras();
+          if (_cameras != null && _cameras!.isNotEmpty) {
+            await Future.delayed(const Duration(seconds: 1)); // Thêm delay trước khi khởi tạo controller
+            await _initCameraController(_cameras![_selectedCameraIndex]);
+            // Đợi camera khởi tạo hoàn tất
+            await Future.delayed(const Duration(seconds: 2));
 
-        // Khởi tạo lại camera từ đầu
-        await _initCameras();
-        if (_cameras != null && _cameras!.isNotEmpty) {
-          await _initCameraController(_cameras![_selectedCameraIndex]);
-
-          // Đợi camera khởi tạo hoàn tất
-          await Future.delayed(const Duration(seconds: 1));
-
-          // Bắt đầu quay video tự động
-          if (!_isRecording && mounted && _cameraController != null && _cameraController!.value.isInitialized) {
-            _startRecording();
+            if (mounted && _cameraController != null && _cameraController!.value.isInitialized) {
+              // Bắt đầu quay video tự động
+              if (!_isRecording) {
+                await Future.delayed(const Duration(seconds: 1)); // Thêm delay trước khi bắt đầu quay
+                _startRecording();
+              }
+            }
           }
+        } catch (e) {
+          print("Lỗi khi khởi tạo camera mới: $e");
+          _showErrorDialog('Lỗi khi khởi tạo camera. Vui lòng thử lại.');
         }
       }
     }
@@ -226,6 +253,25 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
             _videoPath = videoFile.path;
             _stopTimer();
           });
+
+          // Lưu video vào thư viện
+          try {
+            final File file = File(videoFile.path);
+            if (await file.exists()) {
+              final result = await ImageGallerySaver.saveFile(file.path);
+              if (result['isSuccess']) {
+                controller.uploadFile(file, file.path.split('.').last);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Video đã được lưu vào thư viện')),
+                );
+              } else {
+                _showErrorDialog('Không thể lưu video vào thư viện');
+              }
+            }
+          } catch (e) {
+            print('Error saving video to gallery: $e');
+            _showErrorDialog('Lỗi khi lưu video vào thư viện: $e');
+          }
         }
       }
     } catch (e) {
@@ -377,51 +423,6 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
                       ),
                     ),
                   ),
-
-                // // QR scan result - chỉ hiển thị trong 1 giây trước khi chuyển sang chế độ quay video
-                // if (_isQrMode && _scanResult != null)
-                //   Positioned(
-                //     bottom: 16,
-                //     left: 16,
-                //     right: 16,
-                //     child: Container(
-                //       padding: const EdgeInsets.all(12),
-                //       decoration: BoxDecoration(
-                //         color: Colors.black.withOpacity(0.7),
-                //         borderRadius: BorderRadius.circular(8),
-                //       ),
-                //       child: Column(
-                //         mainAxisSize: MainAxisSize.min,
-                //         children: [
-                //           const Text(
-                //             'Mã QR đã quét:',
-                //             style: TextStyle(
-                //               color: Colors.white,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           ),
-                //           const SizedBox(height: 4),
-                //           Text(
-                //             _scanResult!,
-                //             style: const TextStyle(
-                //               color: Colors.white,
-                //             ),
-                //             maxLines: 2,
-                //             overflow: TextOverflow.ellipsis,
-                //           ),
-                //           const SizedBox(height: 8),
-                //           const Text(
-                //             'Đang chuyển sang chế độ quay video...',
-                //             style: TextStyle(
-                //               color: Colors.white,
-                //               fontStyle: FontStyle.italic,
-                //             ),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-
                 if (!_isQrMode && _selectedOption.isEmpty)
                   Positioned(
                     bottom: 16,

@@ -24,9 +24,23 @@ class ApiService {
     final response = await _httpManager.get(url: URLConstants.GET_ORDER_VIDEO(0, 10, ''),);
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
-     List<Map<String, dynamic>> listJson = res.data;
-      List<OrderVideoResponse> listData = listJson.map((json) => OrderVideoResponse.fromJson(json)).toList();
+     Map<String, dynamic> listJson = res.data;
+      List<OrderVideoResponse> listData = ListVideoOrderResponse.fromJson(res.data).data ?? [];
       return listData;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  initUpload(Map<String, Object> map) {}
+
+  completeUpload(Map<String, dynamic> map) {}
+
+  presignedUrlFile(Map<String, Object?> map) async {
+    final response = await _httpManager.post(url: URLConstants.PRE_UPLOAD, data: map);
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return res.data;
     } else {
       throw Exception('Failed to load data');
     }

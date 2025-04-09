@@ -19,6 +19,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
   bool _isInitialized = false;
   String? _imagePath;
   int _selectedCameraIndex = 0;
+  bool _isCapturing = false; // Track if capture is in progress
 
   // QR Scanner variables
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
@@ -157,37 +158,67 @@ class _QrImageScreenState extends State<QrImageScreen> {
       return;
     }
 
+    if (_isCapturing) {
+      _showErrorDialog('Đang xử lý ảnh trước đó. Vui lòng đợi.');
+      return;
+    }
+
     try {
+      setState(() => _isCapturing = true);
+      
       // Đảm bảo camera được mở trước khi chụp
       if (!_cameraController!.value.isInitialized) {
         await _cameraController!.initialize();
       }
 
-      // Tạo thư mục để lưu ảnh
-      final Directory appDir = await getTemporaryDirectory();
-      final String imageDirectory = '${appDir.path}/Images';
+      // Lấy thư mục Pictures của thiết bị
+      final Directory? directory = Platform.isAndroid
+          ? await getExternalStorageDirectory() // Android
+          : await getApplicationDocumentsDirectory(); // iOS
+
+      if (directory == null) {
+        throw Exception('Không thể truy cập thư mục lưu trữ');
+      }
+
+      final String imageDirectory = Platform.isAndroid
+          ? '${directory.path}/Pictures/DongHangNhanh'
+          : '${directory.path}/DongHangNhanh';
+
+      // Tạo thư mục nếu chưa tồn tại
       await Directory(imageDirectory).create(recursive: true);
 
       // Chụp ảnh
       final XFile imageFile = await _cameraController!.takePicture();
       
-      // Di chuyển ảnh vào thư mục lưu trữ
-      final String fileName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      // Lưu ảnh vào thư mục Pictures với tên file duy nhất
+      final String fileName = 'DHN_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final String filePath = path.join(imageDirectory, fileName);
       await imageFile.saveTo(filePath);
 
       if (mounted) {
         setState(() {
           _imagePath = filePath;
+          _isCapturing = false;
         });
+        _showErrorDialog('Ảnh đã được lưu vào: $filePath');
       }
     } catch (e) {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
       String errorMessage = 'Lỗi khi chụp ảnh: $e';
       print(errorMessage);
       _showErrorDialog(errorMessage);
 
+      // Thử khởi tạo lại camera khi có lỗi
       if (mounted) {
-        _initCameras();
+        try {
+          await _cameraController?.dispose();
+          _cameraController = null;
+          await _initializeCamera();
+        } catch (reinitError) {
+          print('Lỗi khởi tạo lại camera: $reinitError');
+        }
       }
     }
   }
@@ -213,9 +244,16 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
   @override
   void dispose() {
-    _cameraController?.dispose();
-    _cameraController = null;
-    _qrViewController?.dispose();
+    if (mounted) {
+      if (_cameraController != null) {
+        _cameraController!.dispose();
+        _cameraController = null;
+      }
+      if (_qrViewController != null) {
+        _qrViewController!.dispose();
+        _qrViewController = null;
+      }
+    }
     super.dispose();
   }
 
