@@ -81,7 +81,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
 
   Future<void> _initCameraController(CameraDescription camera) async {
     if (_cameraController != null) {
-      await _cameraController!.dispose();
+      // await _cameraController!.dispose();
       _cameraController = null;
     }
 
@@ -154,7 +154,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
         // Giải phóng camera controller hiện tại nếu có
         if (_cameraController != null) {
           try {
-            await _cameraController!.dispose();
+            // await _cameraController!.dispose();
             // Thêm thời gian chờ sau khi giải phóng camera controller
             await Future.delayed(const Duration(seconds: 1));
           } catch (e) {
