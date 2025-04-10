@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+// import 'package:gallery_saver/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -27,7 +28,6 @@ class _QrImageScreenState extends State<QrImageScreen> {
   String? _scanResult;
   bool _isQrMode = true; // Start in QR scanning mode
   String _selectedOption = "";
-
 
   @override
   void initState() {
@@ -73,7 +73,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
   Future<void> _initCameraController(CameraDescription camera) async {
     if (_cameraController != null) {
-      await _cameraController!.dispose();
+      // await _cameraController!.dispose();
       _cameraController = null;
     }
 
@@ -96,7 +96,6 @@ class _QrImageScreenState extends State<QrImageScreen> {
       }
     }
   }
-
 
   // QR code scanner setup
   void _onQRViewCreated(QRViewController controller) {
@@ -153,7 +152,9 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
   // Camera methods
   Future<void> _takePicture() async {
-    if (!_isInitialized || _cameraController == null || !_cameraController!.value.isInitialized) {
+    if (!_isInitialized ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       _showErrorDialog('Camera chưa sẵn sàng. Vui lòng thử lại.');
       return;
     }
@@ -165,7 +166,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
     try {
       setState(() => _isCapturing = true);
-      
+
       // Đảm bảo camera được mở trước khi chụp
       if (!_cameraController!.value.isInitialized) {
         await _cameraController!.initialize();
@@ -189,18 +190,22 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
       // Chụp ảnh
       final XFile imageFile = await _cameraController!.takePicture();
-      
+
       // Lưu ảnh vào thư mục Pictures với tên file duy nhất
-      final String fileName = 'DHN_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String fileName =
+          'DHN_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final String filePath = path.join(imageDirectory, fileName);
       await imageFile.saveTo(filePath);
+
+// Lưu ảnh vào thư viện
+//       await GallerySaver.saveImage(filePath, albumName: 'DongHangNhanh');
 
       if (mounted) {
         setState(() {
           _imagePath = filePath;
           _isCapturing = false;
         });
-        _showErrorDialog('Ảnh đã được lưu vào: $filePath');
+        _showErrorDialog('Ảnh đã được lưu vào thư viện: $filePath');
       }
     } catch (e) {
       if (mounted) {
@@ -213,7 +218,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
       // Thử khởi tạo lại camera khi có lỗi
       if (mounted) {
         try {
-          await _cameraController?.dispose();
+          // await _cameraController?.dispose();
           _cameraController = null;
           await _initializeCamera();
         } catch (reinitError) {
@@ -222,7 +227,6 @@ class _QrImageScreenState extends State<QrImageScreen> {
       }
     }
   }
-
 
   void _showErrorDialog(String message) {
     if (mounted) {
@@ -257,7 +261,6 @@ class _QrImageScreenState extends State<QrImageScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _cameraController == null) {
@@ -281,8 +284,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
             child: Stack(
               children: [
                 // Camera preview
-                if (!_isQrMode)
-                  CameraPreview(_cameraController!),
+                if (!_isQrMode) CameraPreview(_cameraController!),
 
                 // QR Scanner
                 if (_isQrMode)
@@ -431,7 +433,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 if (_isQrMode)
-                // In QR mode, add a button to toggle flash
+                  // In QR mode, add a button to toggle flash
                   _ControlButton(
                     icon: Icons.flash_on,
                     label: 'Đèn flash',
@@ -454,19 +456,19 @@ class _QrImageScreenState extends State<QrImageScreen> {
                 //     isStart: true,
                 //   )
                 else ...[
-                    // In video mode and recording, show recording controls
-                    _ControlButton(
-                      icon: Icons.camera_alt,
-                      isStart: true,
-                      label: 'Chụp ảnh',
-                      onPressed: _takePicture,
-                    ),
-                    // _ControlButton(
-                    //   icon: _isPaused ? Icons.play_arrow : Icons.pause,
-                    //   label: _isPaused ? 'Tiếp tục' : 'Tạm dừng',
-                    //   onPressed: _isPaused ? _resumeRecording : _pauseRecording,
-                    // ),
-                  ],
+                  // In video mode and recording, show recording controls
+                  _ControlButton(
+                    icon: Icons.camera_alt,
+                    isStart: true,
+                    label: 'Chụp ảnh',
+                    onPressed: _takePicture,
+                  ),
+                  // _ControlButton(
+                  //   icon: _isPaused ? Icons.play_arrow : Icons.pause,
+                  //   label: _isPaused ? 'Tiếp tục' : 'Tạm dừng',
+                  //   onPressed: _isPaused ? _resumeRecording : _pauseRecording,
+                  // ),
+                ],
               ],
             ),
           ),
