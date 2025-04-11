@@ -90,11 +90,18 @@ class QrVideoController extends GetxController {
       dio.options.headers["Authorization"] =
           "Bearer ${Get.find<StorageService>().getToken()}";
       try {
+        dio.interceptors.add(LogInterceptor(
+          requestHeader: true,
+          requestBody: false,
+          responseHeader: false,
+          responseBody: false,
+        ));
         var result = await dio.put(
           url,
           data: file.openRead(),
           options: Options(
             headers: {
+              'Authorization': null,
               'Content-Type': 'video/mp4',
               Headers.contentLengthHeader: fileSize,
             },
