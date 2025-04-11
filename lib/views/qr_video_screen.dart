@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 import '../controllers/qr_video_controller.dart';
@@ -146,6 +145,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
         final File fileVideo = File(file.path);
         controller.uploadFile(fileVideo, file.path.split('.').last);
         debugPrint('📁 Video saved to gallery');
+        _cameraController?.dispose();
       }
     } catch (e) {
       debugPrint('❌ Stop recording error: $e');

@@ -3,12 +3,8 @@ import 'dart:math';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart'; // Cho MIME
-import 'package:path/path.dart' as p;
 
 class HomeController extends GetxController {
   final ApiService apiService;

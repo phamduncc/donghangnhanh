@@ -2,6 +2,7 @@ import 'package:donghangnhanh/views/qr_video_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'list_parcel_screen.dart';
 import 'qr_image_screen.dart';
 import 'home_view.dart';
 import 'setting_screen.dart';
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _screens = [
     const HomeViewScreen(),
     const QrVideoScreen(),
-    const QrImageScreen(),
+    const ListParcelScreen(),
     const SettingsScreen(),
   ];
 
@@ -73,19 +74,19 @@ class _HomePageState extends State<HomePage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Trang chủ',
           ),
           BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.video),
-            label: 'Record',
+            label: 'Ghi hình',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Gallery',
+            icon: Icon(Icons.local_shipping_rounded),
+            label: 'Vận chuyển',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: 'Settings',
+            label: 'Tài khoản',
           ),
         ],
       ),
