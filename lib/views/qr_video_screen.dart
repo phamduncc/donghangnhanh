@@ -88,7 +88,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     _cameraController = CameraController(
       camera,
       ResolutionPreset.high,
-      enableAudio: true,
+      enableAudio: false,
     );
 
     try {
@@ -203,7 +203,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     try {
       // Đảm bảo camera được mở trước khi quay
       if (!_cameraController!.value.isInitialized) {
-        await _cameraController!.initialize();
+        await _cameraController!.initialize().catchError((e) {debugPrint(e);});
       }
 
       // Tạo thư mục để lưu video
@@ -216,7 +216,9 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
       final String filePath = path.join(videoDirectory, fileName);
 
       // Bắt đầu quay video
-      await _cameraController!.startVideoRecording();
+      if (_cameraController!.value.isInitialized) {
+        await _cameraController!.startVideoRecording();
+      }
 
       if (mounted) {
         setState(() {
