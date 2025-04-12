@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:donghangnhanh/model/base_api_response.dart';
 import 'package:donghangnhanh/model/login_request.dart';
+import 'package:donghangnhanh/model/response/list_parcel_items_response.dart';
 import 'package:donghangnhanh/model/response/login_response.dart';
 import 'package:donghangnhanh/model/response/order_parcel_response.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
@@ -18,7 +19,7 @@ class ApiService {
 
   Future<LoginResponse?> login(LoginRequest body) async {
     final response =
-    await _httpManager.post(url: "/dpm/v1/auth/login", data: body.toJson());
+        await _httpManager.post(url: "/dpm/v1/auth/login", data: body.toJson());
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201) {
       return LoginResponse.fromJson(res.data);
@@ -59,13 +60,32 @@ class ApiService {
     }
   }
 
+  Future<List<ParcelItem>?> getListParcelItems(
+      {required int page,
+      required int limit,
+      String? orderCode,
+      required parcelId,}) async {
+    final response = await _httpManager.get(
+      url: URLConstants.GET_LIST_PARCEL_ITEM(0, 10, orderCode ?? '', parcelId),
+    );
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      Map<String, dynamic> listJson = res.data;
+      List<ParcelItem> listData =
+          ListParcelItemsResponse.fromJson(res.data).data ?? [];
+      return listData;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
   initUpload(Map<String, Object> map) {}
 
   completeUpload(Map<String, dynamic> map) {}
 
   presignedUrlFile(Map<String, Object?> map) async {
     final response =
-    await _httpManager.post(url: URLConstants.PRE_UPLOAD, data: map);
+        await _httpManager.post(url: URLConstants.PRE_UPLOAD, data: map);
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       return res.data;
@@ -103,7 +123,7 @@ class ApiService {
   }) async {
     // Định dạng thời gian giống đoạn JS của bạn
     final formattedDate =
-    DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
+        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
     final fileName = '${orderCode}_$formattedDate.png';
 
     // Tạo FormData
@@ -130,6 +150,26 @@ class ApiService {
       if (response.statusCode == 200) {
         print('Upload thành công!');
         print('Response: ${response.data}');
+      } else {
+        print('Lỗi: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi gửi FormData: $e');
+    }
+  }
+
+  Future<String?> getUrlImage({
+    required String fileName,
+  }) async {
+
+    try {
+      final response = await _httpManager.get(
+        url: URLConstants.GET_FILE_URL(fileName),
+      );
+
+      var res = BaseApiResponse.fromJson(response);
+      if (res.code == 200 || res.code == 201) {
+        return res.data;
       } else {
         print('Lỗi: ${response.statusCode}');
       }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:donghangnhanh/controllers/qr_image_controller.dart';
-import 'package:donghangnhanh/controllers/qr_video_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:gallery_saver/gallery_saver.dart';
@@ -9,7 +8,8 @@ import 'package:get/get.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class QrImageScreen extends StatefulWidget {
-  const QrImageScreen({Key? key}) : super(key: key);
+  QrImageScreen({Key? key}) : super(key: key);
+  final String parcelId = Get.arguments as String;
 
   @override
   State<QrImageScreen> createState() => _QrImageScreenState();
@@ -128,11 +128,12 @@ class _QrImageScreenState extends State<QrImageScreen> {
       await GallerySaver.saveImage(file.path);
       final File fileImage = File(file.path);
       controller.createParcelItem(
-        parcelId: '',
+        parcelId: widget.parcelId,
         orderCode: _scanResult ?? '',
         imageFile: fileImage,
       );
       debugPrint('📁 Video saved to gallery');
+      Get.back(result: true);
       _cameraController?.dispose();
       if (mounted) {
         setState(() {
@@ -204,7 +205,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isQrMode ? 'Quét mã QR' : 'Quay video'),
+        title: Text(_isQrMode ? 'Quét mã QR' : 'Chụp ảnh'),
       ),
       body: Column(
         children: [

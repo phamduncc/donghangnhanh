@@ -30,13 +30,9 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
       backgroundColor: const Color(0xFF1A2238),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A2238),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {},
-        ),
         title: Row(
           children: [
-            Image.asset('assets/images/logo.jpeg', height: 40),
+            Image.asset('assets/images/logo.png', height: 40),
             const SizedBox(width: 8),
             const Text(
               'Dong Hang Nhanh',

@@ -22,7 +22,6 @@ class ListParcelController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadParcels();
   }
 
   // Hàm load danh sách đơn hàng

@@ -41,7 +41,7 @@ class _LoginViewState extends State<LoginView> {
                 // Logo and title
                 Center(
                   child: Image.asset(
-                    'assets/images/logo.jpeg',
+                    'assets/images/logo.png',
                     height: 120,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(

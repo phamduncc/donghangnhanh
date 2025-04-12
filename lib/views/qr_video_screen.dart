@@ -34,6 +34,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   @override
   void initState() {
     _isInitialized = true;
+     // _startVideoMode();
     super.initState();
   }
 
@@ -90,7 +91,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     _cameraController = null;
   }
 
-  void _onQRViewCreated(QRViewController controller) {
+  Future<void> _onQRViewCreated(QRViewController controller) async {
     _qrViewController = controller;
     controller.scannedDataStream.listen((scanData) async {
       debugPrint('QR Code scanned: ${scanData.code}');
@@ -216,13 +217,12 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
           Expanded(
             child: Stack(
               children: [
-                // Camera preview
-                if (!_isInQRMode)
-                  _buildCameraPreview(),
-
                 // QR Scanner
                 if (_isInQRMode)
                   _buildQRView(context),
+                // Camera preview
+                if (!_isInQRMode)
+                  _buildCameraPreview(),
                 // Recording indicator
                 if (_isRecording && !_isInQRMode)
                   Positioned(
