@@ -112,7 +112,7 @@ class _ListParcelItemScreenState extends State<ListParcelItemScreen> {
                       ),
                       ElevatedButton.icon(
                         onPressed: () =>
-                            controller.viewParcelImage(item.metadata.filename),
+                            controller.viewParcelImage(item.metadata.filename ?? ''),
                         icon: const Icon(Icons.image),
                         label: const Text('Xem ảnh'),
                         style: ElevatedButton.styleFrom(

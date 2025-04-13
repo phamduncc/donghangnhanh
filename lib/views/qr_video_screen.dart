@@ -34,7 +34,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   @override
   void initState() {
     _isInitialized = true;
-     // _startVideoMode();
+    // _startVideoMode();
     super.initState();
   }
 
@@ -108,7 +108,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     _qrViewController = null;
     final cameras = await availableCameras();
     final rearCamera = cameras.firstWhere(
-          (camera) => camera.lensDirection == CameraLensDirection.back,
+      (camera) => camera.lensDirection == CameraLensDirection.back,
       orElse: () => cameras.first,
     );
 
@@ -130,7 +130,8 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   }
 
   Future<void> _stopRecording() async {
-    if (_cameraController == null || !_cameraController!.value.isRecordingVideo) return;
+    if (_cameraController == null || !_cameraController!.value.isRecordingVideo)
+      return;
 
     try {
       final file = await _cameraController!.stopVideoRecording();
@@ -144,7 +145,14 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
       if (_videoPath != null) {
         await GallerySaver.saveVideo(_videoPath!);
         final File fileVideo = File(file.path);
-        controller.uploadFile(fileVideo, file.path.split('.').last);
+        var res =
+            await controller.uploadFile(fileVideo, file.path.split('.').last);
+        if (res != null) {
+          controller.createOrder(res);
+        } else {
+          Get.snackbar('Error', 'Lỗi trong quá trình tải file',
+              backgroundColor: Colors.red, colorText: Colors.white);
+        }
         debugPrint('📁 Video saved to gallery');
         _cameraController?.dispose();
       }
@@ -192,8 +200,6 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     });
   }
 
-
-
   void _stopTimer() {
     _timer?.cancel();
     _remainingSeconds = 600; // Reset về 10 phút
@@ -204,9 +210,9 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     int seconds = _remainingSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -218,11 +224,9 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
             child: Stack(
               children: [
                 // QR Scanner
-                if (_isInQRMode)
-                  _buildQRView(context),
+                if (_isInQRMode) _buildQRView(context),
                 // Camera preview
-                if (!_isInQRMode)
-                  _buildCameraPreview(),
+                if (!_isInQRMode) _buildCameraPreview(),
                 // Recording indicator
                 if (_isRecording && !_isInQRMode)
                   Positioned(
@@ -307,7 +311,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 if (_isInQRMode)
-                // In QR mode, add a button to toggle flash
+                  // In QR mode, add a button to toggle flash
                   _ControlButton(
                     icon: Icons.flash_on,
                     label: 'Đèn flash',
@@ -346,8 +350,6 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     );
   }
 }
-
-
 
 class _ControlButton extends StatelessWidget {
   final IconData icon;

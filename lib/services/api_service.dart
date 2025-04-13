@@ -60,11 +60,12 @@ class ApiService {
     }
   }
 
-  Future<List<ParcelItem>?> getListParcelItems(
-      {required int page,
-      required int limit,
-      String? orderCode,
-      required parcelId,}) async {
+  Future<List<ParcelItem>?> getListParcelItems({
+    required int page,
+    required int limit,
+    String? orderCode,
+    required parcelId,
+  }) async {
     final response = await _httpManager.get(
       url: URLConstants.GET_LIST_PARCEL_ITEM(0, 10, orderCode ?? '', parcelId),
     );
@@ -79,9 +80,27 @@ class ApiService {
     }
   }
 
-  initUpload(Map<String, Object> map) {}
+  initUpload(Map<String, Object> map) async {
+    final response =
+        await _httpManager.post(url: URLConstants.INIT_UPLOAD, data: map);
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return res.data;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
 
-  completeUpload(Map<String, dynamic> map) {}
+  completeUpload(Map<String, dynamic> map) async {
+    final response =
+        await _httpManager.post(url: URLConstants.COMPLETE_UPLOAD, data: map);
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return res.data;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
 
   presignedUrlFile(Map<String, Object?> map) async {
     final response =
@@ -161,7 +180,6 @@ class ApiService {
   Future<String?> getUrlImage({
     required String fileName,
   }) async {
-
     try {
       final response = await _httpManager.get(
         url: URLConstants.GET_FILE_URL(fileName),

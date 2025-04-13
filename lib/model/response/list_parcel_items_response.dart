@@ -58,43 +58,43 @@ class ParcelItem {
 
 @JsonSerializable()
 class Metadata {
-  final String id;
-  final String userId;
-  final String storeId;
-  final String ownerStore;
-  final String fieldName;
-  final String originalName;
-  final String encoding;
-  final String mimetype;
-  final int size;
+  final String? id;
+  final String? userId;
+  final String? storeId;
+  final String? ownerStore;
+  final String? fieldName;
+  final String? originalName;
+  final String? encoding;
+  final String? mimetype;
+  final int? size;
   final String? destination;
-  final String filename;
+  final String? filename;
   final String? path;
-  final String status;
-  final String bucketName;
-  final String system;
-  final String prefix;
+  final String? status;
+  final String? bucketName;
+  final String? system;
+  final String? prefix;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? deletedAt;
 
   Metadata({
-    required this.id,
-    required this.userId,
-    required this.storeId,
-    required this.ownerStore,
-    required this.fieldName,
-    required this.originalName,
-    required this.encoding,
-    required this.mimetype,
-    required this.size,
+    this.id,
+    this.userId,
+    this.storeId,
+    this.ownerStore,
+    this.fieldName,
+    this.originalName,
+    this.encoding,
+    this.mimetype,
+    this.size,
     this.destination,
-    required this.filename,
+    this.filename,
     this.path,
-    required this.status,
-    required this.bucketName,
-    required this.system,
-    required this.prefix,
+    this.status,
+    this.bucketName,
+    this.system,
+    this.prefix,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
