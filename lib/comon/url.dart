@@ -9,4 +9,5 @@ class URLConstants {
   static String CREATE_PARCEL_ITEM = '/dpm/v1/parcel/item';
   static String GET_FILE_URL(String path) => '/dpm/v1/file/$path';
   static String GET_LIST_PARCEL_ITEM(int page, int limit, String? orderCode, String parcelId) => '/dpm/v1/parcel/item/search?page=$page&limit=$limit&parcelId=$parcelId';
+  static String CREATE_ORDER_VIDEO = '/dpm/v1/order';
 }

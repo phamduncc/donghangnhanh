@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../controllers/home_controller.dart';
 
@@ -103,63 +104,77 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
               ],
             ),
           ),
-          Obx(()=>Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: controller.orderVideoList.length, 
-              itemBuilder: (context, index) {
-                var order = controller.orderVideoList[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.receipt, size: 24),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'SHN-43276582345llllrrrr',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '15/09/2024 14:41:19',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const Row(
+          Obx(
+            () => Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: controller.orderVideoList.length,
+                itemBuilder: (context, index) {
+                  var order = controller.orderVideoList[index];
+                  return InkWell(
+                    onTap: () {
+                      Get.offNamed('/video_detail', arguments: {
+                        "videoId": order.metadata.filename,
+                        "orderType": order.type,
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.receipt, size: 24),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Video đồng hàng: '),
                                 Text(
-                                  'Đã xoá',
-                                  style: TextStyle(color: Colors.blue),
+                                  order.orderCode,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
-                                Icon(Icons.close, size: 16, color: Colors.blue),
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat('dd/MM/yyyy HH:mm')
+                                      .format(order.createdAt),
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                                const Row(
+                                  children: [
+                                    Text('Video đồng hàng: '),
+                                    Text(
+                                      'Đã xoá',
+                                      style: TextStyle(color: Colors.blue),
+                                    ),
+                                    Icon(Icons.close,
+                                        size: 16, color: Colors.blue),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const Icon(Icons.check_circle, color: Colors.green),
+                        ],
                       ),
-                      const Icon(Icons.check_circle, color: Colors.green),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),),
+          ),
         ],
       ),
-
     );
   }
 
-  Widget _buildInfoCard(String title, String value, Color color, IconData icon) {
+  Widget _buildInfoCard(
+      String title, String value, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -180,7 +195,8 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
               const SizedBox(width: 4),
               Text(
                 value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
           ),

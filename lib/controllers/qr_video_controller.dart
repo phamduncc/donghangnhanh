@@ -1,9 +1,12 @@
 import 'dart:math';
 
 import 'package:donghangnhanh/comon/data_center.dart';
+import 'package:donghangnhanh/model/create_order_video_request.dart';
 import 'package:donghangnhanh/model/response/file_video_response_model.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_rx/get_rx.dart';
 import '../model/response/list_parcel_items_response.dart';
 import '../services/api_service.dart';
 import 'dart:convert';
@@ -19,9 +22,10 @@ class QrVideoController extends GetxController {
 
   QrVideoController({required this.apiService});
 
-  RxList<OrderVideoResponse> orderVideoList = <OrderVideoResponse>[].obs;
   Rx<Metadata?> fileVideo = Rx<Metadata?>(null);
-
+  RxString orderCode = ''.obs;
+  RxString selectedOption = "".obs;
+  RxBool isLoading = false.obs;
   int CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
 
   String createRandomString(int length) {
@@ -33,24 +37,34 @@ class QrVideoController extends GetxController {
         .join();
   }
 
-  void getOrder({String? keySearch}) async {
-    try {
-      var result = await apiService.getOrderVideo(
-        page: 0,
-        limit: 10,
-        orderCode: keySearch,
-      );
-      if (result != null) {
-        orderVideoList.assignAll(result);
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Invalid credentials');
-    }
-  }
-
-  void createOrder(Map<String, dynamic> jsonData){
+  Future<void> createOrder(Map<String, dynamic> jsonData) async {
     var data = Metadata.fromJson(jsonData);
     fileVideo.value = data;
+    var response = await apiService.createOrderVideo(
+      CreateOrderVideoRequest(
+        fileMetadataId: data.id,
+        orderCode: orderCode.value,
+        type: selectedOption.value,
+        prepareCode: '',
+        updateStorage: true,
+        startTime: data.createdAt,
+        duration: 0,
+      ),
+    );
+    if (response != null) {
+      Get.snackbar(
+        'Thông báo',
+        'Tạo thành công',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      Get.offNamed('/video_detail', arguments: {
+        "videoId": data.filename,
+        "orderType": selectedOption.value
+      });
+    } else {
+      Get.snackbar('Error', 'Invalid credentials');
+    }
   }
 
   Future<Map<String, dynamic>?> uploadFile(File file, String mimeType) async {

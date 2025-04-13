@@ -1,6 +1,8 @@
+import 'package:donghangnhanh/bindings/video_detail_binding.dart';
 import 'package:donghangnhanh/views/list_parcel_item_screen.dart';
 import 'package:donghangnhanh/views/qr_image_screen.dart';
 import 'package:donghangnhanh/views/splash_screeen.dart';
+import 'package:donghangnhanh/views/view_detail_video_screen.dart';
 import 'package:get/get.dart';
 import '../views/home_page.dart';
 import '../views/login_view.dart';
@@ -32,6 +34,11 @@ class AppPages {
     GetPage(
       name: '/list_parcel_item',
       page: () => ListParcelItemScreen(),
+    ),
+    GetPage(
+      name: '/video_detail',
+      page: () => ViewDetailVideoScreen(),
+      binding: VideoDetailBinding(),
     ),
   ];
 }

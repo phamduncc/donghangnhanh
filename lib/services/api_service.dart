@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:donghangnhanh/model/base_api_response.dart';
+import 'package:donghangnhanh/model/create_order_video_request.dart';
 import 'package:donghangnhanh/model/login_request.dart';
 import 'package:donghangnhanh/model/response/list_parcel_items_response.dart';
 import 'package:donghangnhanh/model/response/login_response.dart';
@@ -19,7 +20,7 @@ class ApiService {
 
   Future<LoginResponse?> login(LoginRequest body) async {
     final response =
-        await _httpManager.post(url: "/dpm/v1/auth/login", data: body.toJson());
+    await _httpManager.post(url: "/dpm/v1/auth/login", data: body.toJson());
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201) {
       return LoginResponse.fromJson(res.data);
@@ -28,7 +29,7 @@ class ApiService {
     }
   }
 
-  Future<List<OrderVideoResponse>?> getOrderVideo(
+  Future<List<VideoOrder>?> getOrderVideo(
       {required int page, required int limit, String? orderCode}) async {
     final response = await _httpManager.get(
       url: URLConstants.GET_ORDER_VIDEO(0, 10, orderCode ?? ''),
@@ -36,7 +37,7 @@ class ApiService {
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       Map<String, dynamic> listJson = res.data;
-      List<OrderVideoResponse> listData =
+      List<VideoOrder> listData =
           ListVideoOrderResponse.fromJson(res.data).data ?? [];
       return listData;
     } else {
@@ -82,7 +83,7 @@ class ApiService {
 
   initUpload(Map<String, Object> map) async {
     final response =
-        await _httpManager.post(url: URLConstants.INIT_UPLOAD, data: map);
+    await _httpManager.post(url: URLConstants.INIT_UPLOAD, data: map);
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       return res.data;
@@ -93,7 +94,7 @@ class ApiService {
 
   completeUpload(Map<String, dynamic> map) async {
     final response =
-        await _httpManager.post(url: URLConstants.COMPLETE_UPLOAD, data: map);
+    await _httpManager.post(url: URLConstants.COMPLETE_UPLOAD, data: map);
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       return res.data;
@@ -102,9 +103,9 @@ class ApiService {
     }
   }
 
-  presignedUrlFile(Map<String, Object?> map) async {
+  Future presignedUrlFile(Map<String, Object?> map) async {
     final response =
-        await _httpManager.post(url: URLConstants.PRE_UPLOAD, data: map);
+    await _httpManager.post(url: URLConstants.PRE_UPLOAD, data: map);
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       return res.data;
@@ -134,7 +135,7 @@ class ApiService {
     }
   }
 
-  Future<void> createParcelItem({
+  Future<bool> createParcelItem({
     required String parcelId,
     required String orderCode,
     required bool isDuplicate,
@@ -142,7 +143,7 @@ class ApiService {
   }) async {
     // Định dạng thời gian giống đoạn JS của bạn
     final formattedDate =
-        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
+    DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
     final fileName = '${orderCode}_$formattedDate.png';
 
     // Tạo FormData
@@ -169,11 +170,14 @@ class ApiService {
       if (response.statusCode == 200) {
         print('Upload thành công!');
         print('Response: ${response.data}');
+        return true;
       } else {
         print('Lỗi: ${response.statusCode}');
+        return false;
       }
     } catch (e) {
       print('Lỗi khi gửi FormData: $e');
+      return false;
     }
   }
 
@@ -195,4 +199,32 @@ class ApiService {
       print('Lỗi khi gửi FormData: $e');
     }
   }
+
+  Future createOrderVideo(CreateOrderVideoRequest body) async {
+    final response =
+    await _httpManager.post(url: URLConstants.CREATE_ORDER_VIDEO, data: body.toJson());
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return res.data;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+// getUrlVideo({required String fileName}) async {
+//   try {
+//     final response = await _httpManager.get(
+//       url: URLConstants.GET_FILE_URL(fileName),
+//     );
+//
+//     var res = BaseApiResponse.fromJson(response);
+//     if (res.code == 200 || res.code == 201) {
+//       return res.data;
+//     } else {
+//       print('Lỗi: ${response.statusCode}');
+//     }
+//   } catch (e) {
+//     print('Lỗi khi gửi FormData: $e');
+//   }
+// }
 }

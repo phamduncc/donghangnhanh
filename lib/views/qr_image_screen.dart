@@ -127,14 +127,23 @@ class _QrImageScreenState extends State<QrImageScreen> {
       final XFile file = await _cameraController!.takePicture();
       await GallerySaver.saveImage(file.path);
       final File fileImage = File(file.path);
-      controller.createParcelItem(
+      var res = await controller.createParcelItem(
         parcelId: widget.parcelId,
         orderCode: _scanResult ?? '',
         imageFile: fileImage,
       );
-      debugPrint('📁 Video saved to gallery');
-      Get.back(result: true);
-      _cameraController?.dispose();
+      if (res) {
+        Get.back(result: true);
+        Get.snackbar(
+          "Thông báo",
+          "Tạo đơn thành công",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        _cameraController?.dispose();
+      } else {
+        _showErrorDialog('Lỗi khi lưu ảnh. Vui lòng thử lại.');
+      }
       if (mounted) {
         setState(() {
           _isCapturing = false;
@@ -362,7 +371,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 if (_isQrMode)
-                  // In QR mode, add a button to toggle flash
+                // In QR mode, add a button to toggle flash
                   _ControlButton(
                     icon: Icons.flash_on,
                     label: 'Đèn flash',
