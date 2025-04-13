@@ -9,7 +9,7 @@ class ListParcelItemController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxString error = ''.obs;
-  RxInt size = 10.obs;
+  RxInt size = 1000.obs;
   RxInt page = 0.obs;
   RxInt totalPage = 0.obs;
   RxList<ParcelItem> parcelItems = <ParcelItem>[].obs;
