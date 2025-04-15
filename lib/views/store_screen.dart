@@ -77,7 +77,7 @@ class StoreScreen extends GetView<StoreController> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  store.email ?? '',
+                                  store.field ?? '',
                                   style: const TextStyle(
                                     color: Colors.white70,
                                   ),

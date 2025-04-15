@@ -52,7 +52,7 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
               onPressed: () async {
                 final result = await Get.toNamed('/store');
                 if (result != null && result is Store) {
-                  controller.selectedStore.value = result;
+                  controller.selectStore(result.id);
                 }
               },
               style: OutlinedButton.styleFrom(

@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:donghangnhanh/comon/data_center.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
 import 'package:donghangnhanh/model/response/store_model.dart';
+import 'package:donghangnhanh/network/http_manager.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 import 'dart:io';
@@ -24,6 +26,22 @@ class HomeController extends GetxController {
       );
       if(result != null) {
         orderVideoList.assignAll(result);
+      }
+    } catch(e) {
+      Get.snackbar('Error', 'Invalid credentials');
+    }
+  }
+
+  Future<void> selectStore(String id) async {
+    try{
+      var result = await apiService.selectStore(
+        id,
+      );
+      if(result != null) {
+        await Get.find<StorageService>().saveToken(result.token);
+        await Get.find<StorageService>().saveRefreshToken(result.refreshToken);
+        Get.find<HTTPManager>().updateToken(result.token);
+        getOrder();
       }
     } catch(e) {
       Get.snackbar('Error', 'Invalid credentials');

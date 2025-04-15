@@ -30,6 +30,16 @@ class ApiService {
     }
   }
 
+  Future<LoginResponse?> selectStore(String id) async {
+    final response = await _httpManager.post(url: URLConstants.AUTH_STORE(id));
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201) {
+      return LoginResponse.fromJson(res.data);
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
   Future<List<VideoOrder>?> getOrderVideo(
       {required int page, required int limit, String? orderCode}) async {
     final response = await _httpManager.get(
