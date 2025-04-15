@@ -1,3 +1,4 @@
+import 'package:donghangnhanh/model/response/store_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -44,6 +45,33 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
       ),
       body: Column(
         children: [
+          // Nút chọn cửa hàng
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Obx(() => OutlinedButton(
+              onPressed: () async {
+                final result = await Get.toNamed('/store');
+                if (result != null && result is Store) {
+                  controller.selectedStore.value = result;
+                }
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.store, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    controller.selectedStore.value?.name ?? 'Chọn cửa hàng',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            )),
+          ),
           Container(
             padding: const EdgeInsets.all(16),
             child: Row(

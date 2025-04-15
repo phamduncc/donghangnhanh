@@ -7,6 +7,7 @@ import 'package:donghangnhanh/model/response/list_parcel_items_response.dart';
 import 'package:donghangnhanh/model/response/login_response.dart';
 import 'package:donghangnhanh/model/response/order_parcel_response.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
+import 'package:donghangnhanh/model/response/store_response.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart' as dio;
@@ -58,6 +59,22 @@ class ApiService {
       return listData;
     } else {
       throw Exception('Failed to load data');
+    }
+  }
+
+  Future<StoreResponse?> getListStore() async {
+    try {
+      final response = await _httpManager.get(
+        url: URLConstants.GET_LIST_STORE,
+      );
+      var res = BaseApiResponse.fromJson(response);
+      if (res.code == 201 || res.code == 200) {
+        return StoreResponse.fromJson(res.data);
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      return null;
     }
   }
 

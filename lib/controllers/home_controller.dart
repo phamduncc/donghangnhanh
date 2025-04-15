@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
+import 'package:donghangnhanh/model/response/store_model.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 import 'dart:io';
@@ -12,6 +13,7 @@ class HomeController extends GetxController {
   HomeController({required this.apiService});
 
    RxList<VideoOrder> orderVideoList = <VideoOrder>[].obs;
+  Rxn<Store> selectedStore = Rxn<Store>();
 
   void getOrder({String? keySearch}) async {
     try{
