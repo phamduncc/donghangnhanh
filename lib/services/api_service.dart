@@ -193,10 +193,9 @@ class ApiService {
           contentType: 'multipart/form-data',
         ),
       );
-
-      if (response.statusCode == 200) {
+      var res = BaseApiResponse.fromJson(response);
+      if (res.code == 200 || res.code == 201) {
         print('Upload thành công!');
-        print('Response: ${response.data}');
         return true;
       } else {
         print('Lỗi: ${response.statusCode}');

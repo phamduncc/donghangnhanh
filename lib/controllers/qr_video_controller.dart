@@ -20,6 +20,8 @@ import 'dart:developer' as developer;
 class QrVideoController extends GetxController {
   final ApiService apiService;
 
+  var videoPath;
+
   QrVideoController({required this.apiService});
 
   Rx<Metadata?> fileVideo = Rx<Metadata?>(null);
@@ -110,7 +112,7 @@ class QrVideoController extends GetxController {
       );
 
       dio.options.headers["Authorization"] =
-          "Bearer ${Get.find<StorageService>().getToken()}";
+      "Bearer ${Get.find<StorageService>().getToken()}";
       try {
         // dio.interceptors.add(LogInterceptor(
         //   requestHeader: true,
@@ -162,7 +164,7 @@ class QrVideoController extends GetxController {
             ? fileSize
             : startByte + CHUNK_SIZE;
         final chunk =
-            await file.openRead(startByte, endByte).reduce((a, b) => a + b);
+        await file.openRead(startByte, endByte).reduce((a, b) => a + b);
 
         final future = dio.put(
           presignedUrls[i],
@@ -189,7 +191,7 @@ class QrVideoController extends GetxController {
         'uploadId': uploadId,
         'parts': List.generate(results.length, (index) {
           final etag =
-              results[index].headers.value('etag')?.replaceAll('"', '');
+          results[index].headers.value('etag')?.replaceAll('"', '');
           return {'ETag': etag, 'PartNumber': index + 1};
         }),
         'fileSize': fileSize,

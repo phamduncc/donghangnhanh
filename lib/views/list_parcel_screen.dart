@@ -24,9 +24,15 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
       backgroundColor: const Color(0xFF1A2238),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A2238),
-        title: const Text(
-          'Phân loại ĐVVC',
-          style: TextStyle(color: Colors.white),
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', height: 40),
+            const SizedBox(width: 8),
+            const Text(
+              'Phân loại ĐVVC',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -243,7 +249,10 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                                     ),
                                     child: const Text(
                                       'Tạo đơn',
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),

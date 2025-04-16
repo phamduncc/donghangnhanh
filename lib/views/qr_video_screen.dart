@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery_saver/gallery_saver.dart';
 import 'package:get/get.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
 import '../controllers/qr_video_controller.dart';
 
@@ -16,99 +16,45 @@ class QrVideoScreen extends StatefulWidget {
 }
 
 class _QrVideoScreenState extends State<QrVideoScreen> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? _qrViewController;
-
   CameraController? _cameraController;
-  bool _isCameraInitialized = false;
   bool _isRecording = false;
-  bool isPaused = false;
-  bool _isInQRMode = true;
+  bool _isCameraInitialized = false;
   String? _videoPath;
   int _remainingSeconds = 600;
-  bool _isInitialized = false;
   Timer? _timer;
   final qrVideoController = Get.put(QrVideoController(apiService: Get.find()));
+  final BarcodeScanner _barcodeScanner = BarcodeScanner();
+  bool _hasDetectedQR = false;
+  bool _showZoomSlider = false;
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _currentZoom = 1.0;
+  ResolutionPreset _selectedResolution = ResolutionPreset.high;
+
+
 
   @override
   void initState() {
-    _isInitialized = true;
-    // _startVideoMode();
     super.initState();
+    initData();
   }
 
-  @override
-  void dispose() {
-    _disposeControllers();
-    super.dispose();
-  }
-
-// Phương thức để khởi tạo camera ban đầu
-  Future<void> _initializeCamera() async {
-    var cameras = await availableCameras();
-    try {
-      if (cameras.isNotEmpty) {
-        await _initCameraController(cameras[0]);
-      }
-    } catch (e) {
-      debugPrint('Lỗi khởi tạo camera: $e');
-    }
-  }
-
-  Future<void> _initCameraController(CameraDescription camera) async {
-    if (_cameraController != null) {
-      // await _cameraController!.dispose();
-      _cameraController = null;
-    }
-
-    _cameraController = CameraController(
-      camera,
-      ResolutionPreset.high,
-      enableAudio: true,
-    );
-
-    try {
-      await _cameraController!.initialize();
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        debugPrint('Error initializing camera controller: $e');
-      }
-    }
-  }
-
-  void _disposeControllers() async {
-    await _qrViewController?.stopCamera();
-    _qrViewController?.dispose();
-    _qrViewController = null;
-
-    await _cameraController?.dispose();
+  void initData(){
     _cameraController = null;
+    _isRecording = false;
+    _isCameraInitialized = false;
+    _videoPath = '';
+    _remainingSeconds = 600;
+    _hasDetectedQR = false;
+    _showZoomSlider = false;
+    qrVideoController.orderCode.value = '';
+    _initializeCameraAndStart();
   }
 
-  Future<void> _onQRViewCreated(QRViewController controller) async {
-    _qrViewController = controller;
-    controller.scannedDataStream.listen((scanData) async {
-      debugPrint('QR Code scanned: ${scanData.code}');
-      qrVideoController.orderCode.value = scanData.code ?? '';
-      if (!_isInQRMode) return;
-      await _initializeCamera();
-      setState(() => _isInQRMode = false);
-      await _startVideoMode();
-    });
-  }
-
-  Future<void> _startVideoMode() async {
-    await _qrViewController?.stopCamera();
-    _qrViewController?.dispose();
-    _qrViewController = null;
+  Future<void> _initializeCameraAndStart() async {
     final cameras = await availableCameras();
     final rearCamera = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
+          (cam) => cam.lensDirection == CameraLensDirection.back,
       orElse: () => cameras.first,
     );
 
@@ -120,13 +66,71 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
 
     try {
       await _cameraController!.initialize();
-      setState(() => _isCameraInitialized = true);
-      _startTimer();
-      await _cameraController!.startVideoRecording();
-      setState(() => _isRecording = true);
+      await _cameraController?.setFlashMode(FlashMode.off);
+      _minZoom = await _cameraController!.getMinZoomLevel();
+      _maxZoom = await _cameraController!.getMaxZoomLevel();
+      _currentZoom = _minZoom;
+      await _cameraController!.setZoomLevel(_currentZoom);
+
+
+      setState(() {
+        _isRecording = true;
+        _isCameraInitialized = true;
+      });
+      _scanQrPeriodically();
     } catch (e) {
-      debugPrint('❌ Camera error: $e');
+      debugPrint('❌ Error initializing camera or starting recording: $e');
     }
+  }
+
+  void _scanQrPeriodically() {
+    Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_hasDetectedQR ||
+          !_isRecording ||
+          !_cameraController!.value.isInitialized) {
+        timer.cancel();
+        return;
+      }
+
+      try {
+        final file = await _cameraController!.takePicture();
+        final inputImage = InputImage.fromFilePath(file.path);
+        final barcodes = await _barcodeScanner.processImage(inputImage);
+
+        if (barcodes.isNotEmpty) {
+          final barcode = barcodes.first;
+          final code = barcode.rawValue;
+          if (code != null) {
+            _hasDetectedQR = true;
+            _startTimer();
+            await _cameraController!.startVideoRecording();
+            debugPrint('✅ QR Detected: $code');
+            qrVideoController.orderCode.value = code;
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ QR scan error: $e');
+      }
+    });
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || !_isRecording) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          timer.cancel();
+          _stopRecording();
+        }
+      });
+    });
   }
 
   Future<void> _stopRecording() async {
@@ -140,82 +144,43 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
         _videoPath = file.path;
       });
 
-      debugPrint('✅ Video recorded to: $_videoPath');
+      debugPrint('✅ Video saved at: $_videoPath');
 
       if (_videoPath != null) {
-        qrVideoController.isLoading.value = true;
+        // qrVideoController.isLoading.value = true;
+        initData();
         await GallerySaver.saveVideo(_videoPath!);
-        final File fileVideo = File(file.path);
-        var res = await qrVideoController.uploadFile(
-            fileVideo, file.path.split('.').last);
+
+        final uploadedFile = File(_videoPath!);
+        final res = await qrVideoController.uploadFile(
+            uploadedFile, _videoPath!.split('.').last);
+
         if (res != null) {
           await qrVideoController.createOrder(res);
-          qrVideoController.isLoading.value = false;
         } else {
-          qrVideoController.isLoading.value = false;
-          Get.snackbar(
-            'Error',
-            'Lỗi trong quá trình tải file',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          Get.snackbar('Lỗi', 'Tải video thất bại',
+              backgroundColor: Colors.red, colorText: Colors.white);
         }
-        debugPrint('📁 Video saved to gallery');
-        // _cameraController?.dispose();
+
+        // qrVideoController.isLoading.value = false;
       }
     } catch (e) {
       debugPrint('❌ Stop recording error: $e');
     }
   }
 
-  Widget _buildQRView(BuildContext context) {
-    return QRView(
-      key: qrKey,
-      onQRViewCreated: _onQRViewCreated,
-      overlay: QrScannerOverlayShape(
-        borderColor: Colors.blue,
-        borderRadius: 10,
-        borderLength: 30,
-        borderWidth: 10,
-        cutOutSize: MediaQuery.of(context).size.width * 0.8,
-      ),
-    );
-  }
-
-  Widget _buildCameraPreview() {
-    if (_cameraController == null || !_isCameraInitialized) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return CameraPreview(_cameraController!);
-  }
-
-  void _startTimer() {
-    _stopTimer(); // Dừng timer cũ nếu có
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted && _isRecording) {
-        setState(() {
-          if (_remainingSeconds > 0) {
-            _remainingSeconds--;
-          } else {
-            _stopTimer();
-            _stopRecording(); // Hàm dừng quay video
-          }
-        });
-      } else {
-        _stopTimer();
-      }
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    _remainingSeconds = 600; // Reset về 10 phút
-  }
-
   String get formattedTime {
-    int minutes = _remainingSeconds ~/ 60;
-    int seconds = _remainingSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final m = _remainingSeconds ~/ 60;
+    final s = _remainingSeconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    _timer?.cancel();
+    _barcodeScanner.close();
+    super.dispose();
   }
 
   @override
@@ -223,150 +188,187 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(_isInQRMode ? 'Quét mã QR' : 'Quay video'),
+        backgroundColor: const Color(0xFF1A2238),
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', height: 40),
+            const SizedBox(width: 8),
+            const Text('Quay video đơn hàng',
+                style: TextStyle(color: Colors.white, fontSize: 20)),
+          ],
+        ),
       ),
-      body: Obx(
-        () => Column(
+      body: Obx(() {
+        return qrVideoController.isLoading.value
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
           children: [
             Expanded(
-              child: (qrVideoController.isLoading.value)
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : Stack(
-                      children: [
-                        // QR Scanner
-                        if (_isInQRMode) _buildQRView(context),
-                        // Camera preview
-                        if (!_isInQRMode) _buildCameraPreview(),
-                        // Recording indicator
-                        if (_isRecording && !_isInQRMode)
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    formattedTime,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+              child: Stack(
+                children: [
+                  if (_isCameraInitialized)
+                    SizedBox.expand(
+                        child: CameraPreview(_cameraController!)),
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            qrVideoController.orderCode.isNotEmpty
+                                ? '🎥 Đang quay video... $formattedTime'
+                                : '🔍 Đang quét mã QR...',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
-
-                        if (!_isInQRMode &&
-                            qrVideoController.selectedOption.isEmpty)
-                          Positioned(
-                            bottom: 16,
-                            left: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  RadioListTile(
-                                    title: const Text('Đóng hàng'),
-                                    value: 'package',
-                                    groupValue:
-                                        qrVideoController.selectedOption.value,
-                                    onChanged: (value) {
-                                      setState(() => qrVideoController
-                                          .selectedOption.value = value ?? '');
-                                    },
-                                  ),
-                                  RadioListTile(
-                                    title: const Text('Nhập hàng'),
-                                    value: 'inbound',
-                                    groupValue:
-                                        qrVideoController.selectedOption.value,
-                                    onChanged: (value) {
-                                      setState(() => qrVideoController
-                                          .selectedOption.value = value ?? '');
-                                    },
-                                  ),
-                                  RadioListTile(
-                                    title: const Text('Xuất hàng'),
-                                    value: 'outbound',
-                                    groupValue:
-                                        qrVideoController.selectedOption.value,
-                                    onChanged: (value) {
-                                      setState(() => qrVideoController
-                                          .selectedOption.value = value ?? '');
-                                    },
-                                  ),
-                                ],
-                              ),
+                          Text(
+                            "Mã đơn hàng: ${qrVideoController.orderCode.value}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
-            ),
+                  ),
 
-            // Control buttons
+                  // Nút zoom góc trên bên phải
+                  if (qrVideoController.orderCode.value.isNotEmpty)
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Column(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.zoom_in, color: Colors.white),
+                            onPressed: () {
+                              setState(() {
+                                _showZoomSlider = !_showZoomSlider;
+                              });
+                            },
+                          ),
+                          if(_showZoomSlider)
+                            RotatedBox(
+                              quarterTurns: 1, // Quay slider 90 độ để hiển thị dọc
+                              child: Slider(
+                                value: _currentZoom,
+                                min: _minZoom,
+                                max: _maxZoom,
+                                divisions: (_maxZoom - _minZoom).round(),
+                                label: '${_currentZoom.toStringAsFixed(1)}x',
+                                onChanged: (value) async {
+                                  setState(() => _currentZoom = value);
+                                  await _cameraController?.setZoomLevel(value);
+                                },
+                                activeColor: Colors.white,
+                                inactiveColor: Colors.white30,
+                              ),
+                            )
+                        ],
+                      ),
+                    ),
+
+                  if (qrVideoController.orderCode.value.isNotEmpty &&
+                      qrVideoController.selectedOption.isEmpty)
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            RadioListTile(
+                              title: const Text('Đóng hàng'),
+                              value: 'package',
+                              groupValue:
+                              qrVideoController.selectedOption.value,
+                              onChanged: (value) {
+                                setState(() => qrVideoController
+                                    .selectedOption.value = value ?? '');
+                              },
+                            ),
+                            RadioListTile(
+                              title: const Text('Nhập hàng'),
+                              value: 'inbound',
+                              groupValue:
+                              qrVideoController.selectedOption.value,
+                              onChanged: (value) {
+                                setState(() => qrVideoController
+                                    .selectedOption.value = value ?? '');
+                              },
+                            ),
+                            RadioListTile(
+                              title: const Text('Xuất hàng'),
+                              value: 'outbound',
+                              groupValue:
+                              qrVideoController.selectedOption.value,
+                              onChanged: (value) {
+                                setState(() => qrVideoController
+                                    .selectedOption.value = value ?? '');
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
               color: Colors.black,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  if (_isInQRMode)
-                    // In QR mode, add a button to toggle flash
+                  if (qrVideoController.orderCode.value.isNotEmpty)
+                    _ControlButton(
+                      icon:
+                      _isRecording ? Icons.stop : Icons.mode_standby,
+                      isStart: true,
+                      label: 'Dừng',
+                      onPressed: _stopRecording,
+                    )
+                  else ...[
                     _ControlButton(
                       icon: Icons.flash_on,
                       label: 'Đèn flash',
-                      onPressed: () {
+                      onPressed: () async {
                         try {
-                          if (_qrViewController != null) {
-                            _qrViewController!.toggleFlash();
+                          if (_cameraController != null) {
+                            await _cameraController
+                                ?.setFlashMode(FlashMode.torch);
                           }
                         } catch (e) {
                           print("Lỗi khi bật/tắt đèn flash: $e");
                         }
                       },
                     )
-                  // else if (!_isRecording)
-                  // // In video mode but not recording, show start recording button
-                  //   _ControlButton(
-                  //     icon: Icons.videocam,
-                  //     label: 'Bắt đầu',
-                  //     onPressed: _startRecording,
-                  //     isStart: true,
-                  //   )
-                  else ...[
-                    // In video mode and recording, show recording controls
-                    _ControlButton(
-                      icon: _isRecording ? Icons.stop : Icons.mode_standby,
-                      isStart: true,
-                      label: 'Dừng',
-                      onPressed: _stopRecording,
-                    ),
-                  ],
+                  ]
                 ],
               ),
             ),
+
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }
