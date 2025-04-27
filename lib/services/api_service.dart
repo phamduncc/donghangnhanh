@@ -1,9 +1,14 @@
 
+import 'dart:io';
+
 import 'package:donghangnhanh/model/base_api_response.dart';
 import 'package:donghangnhanh/model/login_request.dart';
 import 'package:donghangnhanh/model/response/login_response.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:dio/dio.dart' as dio;
+import 'package:http_parser/http_parser.dart';
 
 import '../comon/url.dart';
 import '../network/http_manager.dart';
@@ -45,5 +50,72 @@ class ApiService {
       throw Exception('Failed to load data');
     }
   }
+
+  Future<dynamic> createParcel({
+    required String name,
+    required String shippingCompany,
+  }) async {
+     var body = {
+       "name": name,
+       "shippingCompany": shippingCompany
+     };
+    try {
+      final response = await _httpManager.post(
+        url: URLConstants.CREATE_PARCEL, // Thay bằng URL thật
+        data: body,
+      );
+      var res = BaseApiResponse.fromJson(response);
+      if (res.code == 200||res.code == 201) {
+        return res;
+      } else {
+        print('Lỗi: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi gửi FormData: $e');
+    }
+  }
+
+  Future<void> createParcelItem({
+    required String parcelId,
+    required String orderCode,
+    required bool isDuplicate,
+    required File imageFile,
+  }) async {
+    // Định dạng thời gian giống đoạn JS của bạn
+    final formattedDate = DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
+    final fileName = '${orderCode}_$formattedDate.png';
+
+    // Tạo FormData
+    final formData = dio.FormData.fromMap({
+      'parcelId': parcelId,
+      'orderCode': orderCode,
+      'isDuplicate': isDuplicate.toString(),
+      'file': await dio.MultipartFile.fromFile(
+        imageFile.path,
+        filename: fileName,
+        contentType: MediaType('image', 'png'),
+      ),
+    });
+
+    try {
+      final response = await _httpManager.postFileUpload(
+        url: URLConstants.CREATE_PARCEL_ITEM, // Thay bằng URL thật
+        data: formData,
+        options: dio.Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        print('Upload thành công!');
+        print('Response: ${response.data}');
+      } else {
+        print('Lỗi: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi gửi FormData: $e');
+    }
+  }
+
 }
 

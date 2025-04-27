@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:donghangnhanh/controllers/qr_image_controller.dart';
+import 'package:donghangnhanh/controllers/qr_video_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:gallery_saver/gallery_saver.dart';
+import 'package:get/get.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class QrImageScreen extends StatefulWidget {
@@ -15,10 +17,8 @@ class QrImageScreen extends StatefulWidget {
 
 class _QrImageScreenState extends State<QrImageScreen> {
   CameraController? _cameraController;
-  List<CameraDescription>? _cameras;
   bool _isInitialized = false;
-  String? _imagePath;
-  int _selectedCameraIndex = 0;
+  String? orderCode;
   bool _isCapturing = false; // Track if capture is in progress
 
   // QR Scanner variables
@@ -26,14 +26,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
   QRViewController? _qrViewController;
   String? _scanResult;
   bool _isQrMode = true; // Start in QR scanning mode
-  String _selectedOption = "";
-
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-  }
+  final controller = Get.put(QrImageController(apiService: Get.find()));
 
   @override
   void reassemble() {
@@ -45,35 +38,21 @@ class _QrImageScreenState extends State<QrImageScreen> {
     }
   }
 
-  // Phương thức để lấy danh sách camera có sẵn
-  Future<void> _initCameras() async {
-    try {
-      _cameras = await availableCameras();
-      if (_cameras == null || _cameras!.isEmpty) {
-        _showErrorDialog('Không tìm thấy camera nào trên thiết bị');
-        return;
-      }
-    } catch (e) {
-      print("Lỗi khi lấy danh sách camera: $e");
-      _showErrorDialog('Lỗi khi truy cập camera: $e');
-    }
-  }
-
 // Phương thức để khởi tạo camera ban đầu
   Future<void> _initializeCamera() async {
+    var cameras = await availableCameras();
     try {
-      await _initCameras();
-      if (_cameras != null && _cameras!.isNotEmpty) {
-        await _initCameraController(_cameras![_selectedCameraIndex]);
+      if (cameras.isNotEmpty) {
+        await _initCameraController(cameras[0]);
       }
     } catch (e) {
-      _showErrorDialog('Lỗi khởi tạo camera: $e');
+      debugPrint('Lỗi khởi tạo camera: $e');
     }
   }
 
   Future<void> _initCameraController(CameraDescription camera) async {
     if (_cameraController != null) {
-      await _cameraController!.dispose();
+      // await _cameraController!.dispose();
       _cameraController = null;
     }
 
@@ -92,11 +71,10 @@ class _QrImageScreenState extends State<QrImageScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog('Error initializing camera controller: $e');
+        debugPrint('Error initializing camera controller: $e');
       }
     }
   }
-
 
   // QR code scanner setup
   void _onQRViewCreated(QRViewController controller) {
@@ -113,47 +91,22 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
   // Chuyển sang chế độ chụp ảnh
   void _switchToCameraMode() async {
-    if (_isQrMode) {
-      // Đợi một chút để người dùng có thể thấy kết quả mã QR đã quét
-      await Future.delayed(const Duration(seconds: 1));
+    // Khởi tạo lại camera từ đầu
+    await _initializeCamera();
+    setState(() {
+      _isQrMode = false;
+    });
 
-      if (mounted) {
-        try {
-          // Ngừng QR scanner trước khi chuyển đổi
-          if (_qrViewController != null) {
-            try {
-              await _qrViewController!.pauseCamera();
-            } catch (e) {
-              print("Lỗi khi dừng camera QR: $e");
-            }
-            _qrViewController!.dispose();
-            _qrViewController = null;
-          }
-        } catch (e) {
-          print("Lỗi khi xử lý QR scanner: $e");
-        }
-
-        setState(() {
-          _isQrMode = false;
-        });
-
-        // Giải phóng camera controller hiện tại và tạo mới
-        if (_cameraController != null) {
-          _cameraController = null;
-        }
-
-        // Khởi tạo lại camera từ đầu
-        await _initCameras();
-        if (_cameras != null && _cameras!.isNotEmpty) {
-          await _initCameraController(_cameras![_selectedCameraIndex]);
-        }
-      }
-    }
+    await _qrViewController?.stopCamera();
+    _qrViewController?.dispose();
+    _qrViewController = null;
   }
 
   // Camera methods
   Future<void> _takePicture() async {
-    if (!_isInitialized || _cameraController == null || !_cameraController!.value.isInitialized) {
+    if (!_isInitialized ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       _showErrorDialog('Camera chưa sẵn sàng. Vui lòng thử lại.');
       return;
     }
@@ -165,42 +118,26 @@ class _QrImageScreenState extends State<QrImageScreen> {
 
     try {
       setState(() => _isCapturing = true);
-      
+
       // Đảm bảo camera được mở trước khi chụp
       if (!_cameraController!.value.isInitialized) {
         await _cameraController!.initialize();
       }
-
-      // Lấy thư mục Pictures của thiết bị
-      final Directory? directory = Platform.isAndroid
-          ? await getExternalStorageDirectory() // Android
-          : await getApplicationDocumentsDirectory(); // iOS
-
-      if (directory == null) {
-        throw Exception('Không thể truy cập thư mục lưu trữ');
-      }
-
-      final String imageDirectory = Platform.isAndroid
-          ? '${directory.path}/Pictures/DongHangNhanh'
-          : '${directory.path}/DongHangNhanh';
-
-      // Tạo thư mục nếu chưa tồn tại
-      await Directory(imageDirectory).create(recursive: true);
-
       // Chụp ảnh
-      final XFile imageFile = await _cameraController!.takePicture();
-      
-      // Lưu ảnh vào thư mục Pictures với tên file duy nhất
-      final String fileName = 'DHN_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String filePath = path.join(imageDirectory, fileName);
-      await imageFile.saveTo(filePath);
-
+      final XFile file = await _cameraController!.takePicture();
+      await GallerySaver.saveImage(file.path);
+      final File fileImage = File(file.path);
+      controller.createParcelItem(
+        parcelId: '',
+        orderCode: _scanResult ?? '',
+        imageFile: fileImage,
+      );
+      debugPrint('📁 Video saved to gallery');
+      _cameraController?.dispose();
       if (mounted) {
         setState(() {
-          _imagePath = filePath;
           _isCapturing = false;
         });
-        _showErrorDialog('Ảnh đã được lưu vào: $filePath');
       }
     } catch (e) {
       if (mounted) {
@@ -213,7 +150,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
       // Thử khởi tạo lại camera khi có lỗi
       if (mounted) {
         try {
-          await _cameraController?.dispose();
+          // await _cameraController?.dispose();
           _cameraController = null;
           await _initializeCamera();
         } catch (reinitError) {
@@ -222,7 +159,6 @@ class _QrImageScreenState extends State<QrImageScreen> {
       }
     }
   }
-
 
   void _showErrorDialog(String message) {
     if (mounted) {
@@ -242,6 +178,13 @@ class _QrImageScreenState extends State<QrImageScreen> {
     }
   }
 
+  Widget _buildCameraPreview() {
+    if (_cameraController == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return CameraPreview(_cameraController!);
+  }
+
   @override
   void dispose() {
     if (mounted) {
@@ -257,20 +200,8 @@ class _QrImageScreenState extends State<QrImageScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized || _cameraController == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Quét QR & Quay Video'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_isQrMode ? 'Quét mã QR' : 'Quay video'),
@@ -281,8 +212,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
             child: Stack(
               children: [
                 // Camera preview
-                if (!_isQrMode)
-                  CameraPreview(_cameraController!),
+                if (!_isQrMode) _buildCameraPreview(),
 
                 // QR Scanner
                 if (_isQrMode)
@@ -431,7 +361,7 @@ class _QrImageScreenState extends State<QrImageScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 if (_isQrMode)
-                // In QR mode, add a button to toggle flash
+                  // In QR mode, add a button to toggle flash
                   _ControlButton(
                     icon: Icons.flash_on,
                     label: 'Đèn flash',
@@ -454,19 +384,19 @@ class _QrImageScreenState extends State<QrImageScreen> {
                 //     isStart: true,
                 //   )
                 else ...[
-                    // In video mode and recording, show recording controls
-                    _ControlButton(
-                      icon: Icons.camera_alt,
-                      isStart: true,
-                      label: 'Chụp ảnh',
-                      onPressed: _takePicture,
-                    ),
-                    // _ControlButton(
-                    //   icon: _isPaused ? Icons.play_arrow : Icons.pause,
-                    //   label: _isPaused ? 'Tiếp tục' : 'Tạm dừng',
-                    //   onPressed: _isPaused ? _resumeRecording : _pauseRecording,
-                    // ),
-                  ],
+                  // In video mode and recording, show recording controls
+                  _ControlButton(
+                    icon: Icons.camera_alt,
+                    isStart: true,
+                    label: 'Chụp ảnh',
+                    onPressed: _takePicture,
+                  ),
+                  // _ControlButton(
+                  //   icon: _isPaused ? Icons.play_arrow : Icons.pause,
+                  //   label: _isPaused ? 'Tiếp tục' : 'Tạm dừng',
+                  //   onPressed: _isPaused ? _resumeRecording : _pauseRecording,
+                  // ),
+                ],
               ],
             ),
           ),
