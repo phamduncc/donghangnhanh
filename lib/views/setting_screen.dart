@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../comon/data_center.dart';
 
@@ -15,7 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Simple Replay'),
+        title: const Text('Dohana'),
         centerTitle: true,
       ),
       body: ListView(
@@ -133,9 +135,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {},
           ),
           _buildMenuItem(
-            icon: Icons.card_membership,
-            title: 'Gói bản quyền',
-            onTap: () {},
+            icon: LucideIcons.gem,
+            title: 'Gói giá tham khảo',
+            onTap: () async {
+              Uri url = Uri.parse(
+                  'https://donghangnhanh.vn/vi#pricing'); // Liên kết bạn muốn mở
+              await launchUrl(url);
+            },
           ),
           _buildMenuItem(
             icon: Icons.history,

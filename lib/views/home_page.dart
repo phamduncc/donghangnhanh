@@ -1,7 +1,7 @@
 import 'package:donghangnhanh/views/qr_video_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:lucide_icons/lucide_icons.dart';
 import 'list_parcel_screen.dart';
 import 'qr_image_screen.dart';
 import 'home_view.dart';
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // appBar: AppBar(
-      //   title: const Text('Simple Replay'),
+      //   title: const Text('Dohana'),
       //   actions: [
       //     IconButton(
       //       icon: const Icon(Icons.logout),
@@ -73,19 +73,19 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(LucideIcons.layoutDashboard, size: 18,),
             label: 'Trang chủ',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.video),
+            icon: Icon(LucideIcons.video, size: 18,),
             label: 'Ghi hình',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping_rounded),
+            icon: Icon(LucideIcons.truck, size: 18,),
             label: 'Vận chuyển',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Icon(LucideIcons.settings, size: 18,),
             label: 'Tài khoản',
           ),
         ],

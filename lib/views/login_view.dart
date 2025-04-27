@@ -2,6 +2,7 @@ import 'package:donghangnhanh/widget/custom_button.dart';
 import 'package:donghangnhanh/widget/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends StatefulWidget {
@@ -41,7 +42,7 @@ class _LoginViewState extends State<LoginView> {
                 // Logo and title
                 Center(
                   child: Image.asset(
-                    'assets/images/logo.jpeg',
+                    'assets/images/logo.png',
                     height: 120,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
@@ -62,7 +63,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Dong Hang Nhanh',
+                  'Dohana',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -81,10 +82,11 @@ class _LoginViewState extends State<LoginView> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return 'Bạn chưa nhập email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
+                      return 'Email không hợp lệ';
                     }
                     return null;
                   },
@@ -94,16 +96,16 @@ class _LoginViewState extends State<LoginView> {
                 // Password field
                 CustomTextField(
                   controller: controller.passwordController,
-                  labelText: 'Password',
-                  hintText: 'Enter your password',
+                  labelText: 'Mật khẩu',
+                  hintText: 'Nhập mật khẩu',
                   prefixIcon: Icons.lock,
                   isPassword: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Bạn chưa nhập mật khẩu';
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return 'Mật khẩu có ít nhất 6 ký tự';
                     }
                     return null;
                   },
@@ -118,7 +120,7 @@ class _LoginViewState extends State<LoginView> {
                       // Navigate to forgot password screen
                     },
                     child: const Text(
-                      'Forgot Password?',
+                      'Quên mật khẩu?',
                       style: TextStyle(
                         color: Colors.blue,
                       ),
@@ -129,7 +131,7 @@ class _LoginViewState extends State<LoginView> {
 
                 // Login button
                 CustomButton(
-                  text: 'Login',
+                  text: 'Đăng nhập',
                   isLoading: _isLoading,
                   onPressed: _login,
                   color: Colors.orange,
@@ -141,17 +143,19 @@ class _LoginViewState extends State<LoginView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'Don\'t have an account?',
+                      'Bạn không có tài khoản?',
                       style: TextStyle(
                         color: Colors.grey,
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        // Navigate to register screen
+                      onPressed: () async {
+                        Uri url = Uri.parse(
+                            'https://wms.dohana.vn/register'); // Liên kết bạn muốn mở
+                        await launchUrl(url);
                       },
                       child: const Text(
-                        'Register',
+                        'Đăng ký',
                         style: TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,

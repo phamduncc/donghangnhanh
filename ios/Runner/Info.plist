@@ -47,5 +47,16 @@
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to photo library to save photos</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+    <string>App cần quyền lưu video vào thư viện ảnh của bạn.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>App cần quyền truy cập thư viện ảnh để lưu video.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>fetch</string>
+      <string>remote-notification</string>
+    </array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Chúng tôi cần truy cập vị trí của bạn để gửi thông báo.</string>
 </dict>
 </plist>

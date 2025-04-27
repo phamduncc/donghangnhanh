@@ -1,3 +1,4 @@
+import 'package:donghangnhanh/model/response/order_parcel_response.dart';
 import 'package:donghangnhanh/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,35 +9,33 @@ class ListParcelController extends GetxController {
   ListParcelController({required this.apiService});
 
   // Danh sách đơn hàng
-  final RxList<dynamic> parcels = <dynamic>[].obs;
+  final RxList<OrderParcelResponse> parcels = <OrderParcelResponse>[].obs;
 
   // Trạng thái loading
   final RxBool isLoading = false.obs;
 
   RxString shippingCompany = 'SPX'.obs;
+  RxInt size = 10.obs;
+  RxInt page = 0.obs;
+  RxInt totalPage = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadParcels();
   }
 
   // Hàm load danh sách đơn hàng
-  void loadParcels() async {
+  void loadParcels({String? keySearch}) async {
     isLoading.value = true;
     try {
-      // TODO: Gọi API lấy danh sách đơn hàng
-      await Future.delayed(Duration(seconds: 1)); // Giả lập delay
-
-      // Giả lập dữ liệu mẫu
-      parcels.value = List.generate(
-          10,
-          (index) => {
-                'category': 'Hàng điện tử',
-                'carrier': 'Giao hàng nhanh',
-                'orderNumber': 'DH${100000 + index}',
-                'createdDate': DateTime.now().subtract(Duration(days: index)),
-              });
+      var result = await apiService.getListParcel(
+        page: page.value,
+        limit: size.value,
+        name: keySearch,
+      );
+      if (result != null) {
+        parcels.assignAll(result);
+      }
     } catch (e) {
       Get.snackbar('Lỗi', 'Không thể tải danh sách đơn hàng');
     } finally {

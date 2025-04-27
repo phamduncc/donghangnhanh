@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/list_parcel_controller.dart';
 
 class ListParcelScreen extends StatefulWidget {
@@ -18,22 +19,31 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
 
   @override
   Widget build(BuildContext context) {
+    controller.loadParcels();
     return Scaffold(
-      backgroundColor: const Color(0xFF1A2238),
+      // backgroundColor: const Color(0xFF1A2238),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A2238),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', height: 30),
+            const SizedBox(width: 8),
+            const Text(
+              'Phân loại ĐVVC',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          ],
         ),
-        title: const Text(
-          'Danh sách phân loại đơn vị vận chuyển',
-          style: TextStyle(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () => Get.offNamed("/"),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Implement add category dialog
           Get.dialog(
             AlertDialog(
               title: const Text('Tên phân loại'),
@@ -106,12 +116,8 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                 ElevatedButton(
                   onPressed: () {
                     if (parcelController.text.isEmpty) {
-                      Get.snackbar(
-                        'Validate',
-                        'Vui lòng nhập tên phân loại',
-                        backgroundColor: Colors.red,
-                        colorText: Colors.white
-                      );
+                      Get.snackbar('Validate', 'Vui lòng nhập tên phân loại',
+                          backgroundColor: Colors.red, colorText: Colors.white);
                       return;
                     } else {
                       Get.back();
@@ -141,16 +147,19 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+              ),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Tìm kiếm đơn hàng',
+                  hintText: 'Nhập tên phân loại...',
                   border: InputBorder.none,
                   icon: Icon(Icons.search, color: Colors.grey[600]),
                 ),
@@ -160,14 +169,19 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
           Obx(() => Expanded(
                 child: controller.isLoading.value
                     ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white))
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: controller.parcels.length,
                         itemBuilder: (context, index) {
                           final parcel = controller.parcels[index];
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
+                            margin: const EdgeInsets.only(
+                              bottom: 16,
+                            ),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -192,49 +206,61 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Mã đơn: ${parcel['orderNumber']}',
+                                            '${parcel.name}-${parcel.parcelCode ?? ''}',
                                             style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold),
                                           ),
-                                          const SizedBox(height: 4),
                                           Text(
-                                            'Phân loại: ${parcel['category']}',
+                                            'Đơn vị vận chuyển: ${parcel.shippingCompany}',
                                             style: TextStyle(
                                                 color: Colors.grey[600]),
                                           ),
                                           Text(
-                                            'Đơn vị vận chuyển: ${parcel['carrier']}',
+                                            'Số đơn: ${parcel.numItems}',
                                             style: TextStyle(
                                                 color: Colors.grey[600]),
                                           ),
                                           Text(
-                                            'Ngày tạo: ${parcel['createdDate'].toString().split(' ')[0]}',
+                                            'Ngày tạo: ${parcel.createdAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(parcel.createdAt!) : ''}',
                                             style: TextStyle(
                                                 color: Colors.grey[600]),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.arrow_forward_ios,
-                                        color: Colors.grey),
+                                    InkWell(
+                                      onTap: () {
+                                        Get.toNamed('/list_parcel_item',
+                                            arguments: parcel.id);
+                                      },
+                                      child: const Icon(Icons.arrow_forward_ios,
+                                          color: Colors.grey),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      // Xử lý khi nhấn nút tạo đơn
+                                    onPressed: () async {
+                                      var res = await Get.toNamed('/qr_image',
+                                          arguments: parcel.id);
+                                      if (res ?? false) {
+                                        controller.loadParcels();
+                                      }
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
+                                      backgroundColor: Colors.orange,
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
+                                          vertical: 8),
                                     ),
                                     child: const Text(
                                       'Tạo đơn',
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),

@@ -47,9 +47,17 @@ dependencies:
   camera: ^0.10.5+2  # For camera access and video recording
   permission_handler: ^10.4.3  # For handling permissions
   path: ^1.8.3  # For path manipulation
-  video_player: ^2.7.0  # For video playback
+  video_player: ^2.7.16  # For video playback
   gallery_saver:
   http_parser: ^4.0.2
+  google_mlkit_barcode_scanning: ^0.10.0
+  lucide_icons: ^0.257.0
+  url_launcher: ^6.3.1
+  fluttertoast: ^8.2.12
+  flutter_local_notifications: ^18.0.1
+  flutter_launcher_icons: ^0.14.3
+  pull_to_refresh_flutter3: ^2.0.2
+  unleash_proxy_client_flutter: ^1.9.6
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +97,7 @@ flutter:
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
-  # example:
+  # dohana:
   # fonts:
   #   - family: Schyler
   #     fonts:
@@ -104,3 +112,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
