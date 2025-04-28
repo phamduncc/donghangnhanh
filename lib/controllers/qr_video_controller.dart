@@ -28,6 +28,7 @@ class QrVideoController extends GetxController {
   Rx<Metadata?> fileVideo = Rx<Metadata?>(null);
   RxString orderCode = ''.obs;
   RxString selectedOption = "package".obs;
+  RxString quantity = "package".obs;
   RxBool isLoading = false.obs;
   int CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -41,7 +42,7 @@ class QrVideoController extends GetxController {
   }
 
   Future<void> createOrder(
-      Map<String, dynamic> jsonData, String orderCode) async {
+      Map<String, dynamic> jsonData, String orderCode, int duration) async {
     var data = Metadata.fromJson(jsonData);
     fileVideo.value = data;
     var response = await apiService.createOrderVideo(
@@ -52,13 +53,13 @@ class QrVideoController extends GetxController {
         prepareCode: '',
         updateStorage: true,
         startTime: data.createdAt,
-        duration: 0,
+        duration: duration,
       ),
     );
     if (response != null) {
       Get.snackbar(
         'Thông báo',
-        'Tạo thành công',
+        'Tải video thành công',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -163,7 +164,7 @@ class QrVideoController extends GetxController {
         final uploadFutures = <Future<dynamic>>[];
         final dio = Dio();
 
-        for (var i = 0; i < numParts - 1; i++) {
+        for (var i = 0; i <= numParts - 1; i++) {
           // final startByte = i * CHUNK_SIZE;
           // final endByte = (startByte + CHUNK_SIZE > fileSize)
           //     ? fileSize
@@ -181,16 +182,18 @@ class QrVideoController extends GetxController {
 
           final future = dio.put(
             presignedUrls[i],
-            data: Stream.fromIterable([chunk]),
+            data: chunk,
             options: Options(
               headers: {
-                'Content-Type': 'video/mp4',
-                'x-amz-decoded-content-length': chunk.length.toString(),
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': chunk.length.toString(),
               },
+              sendTimeout: const Duration(seconds: 60), // 10s timeout
+              receiveTimeout: const Duration(seconds: 60),
             ),
             onSendProgress: (sent, total) {
               final progress = (sent / (total == 0 ? 1 : total)) * 100;
-              // print('Part ${i + 1}: $progress%');
+              print('Part ${i + 1}: $progress%');
             },
           ).catchError((error) {
             debugPrint('Error uploading part ${i + 1}: $error');

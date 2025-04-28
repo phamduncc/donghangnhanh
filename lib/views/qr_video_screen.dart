@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,6 +18,7 @@ class QrVideoScreen extends StatefulWidget {
 }
 
 class _QrVideoScreenState extends State<QrVideoScreen> {
+  final player = AudioPlayer();
   CameraController? _cameraController;
   bool _isRecording = false;
   bool _isCameraInitialized = false;
@@ -57,7 +59,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
 
     _cameraController = CameraController(
       rearCamera,
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
       enableAudio: true,
     );
 
@@ -80,10 +82,8 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   }
 
   void _scanQrPeriodically() {
-    Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (_hasDetectedQR ||
-          !_isRecording ||
-          !_cameraController!.value.isInitialized) {
+    Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!_isRecording || !_cameraController!.value.isInitialized) {
         timer.cancel();
         return;
       }
@@ -97,11 +97,21 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
           final barcode = barcodes.first;
           final code = barcode.rawValue;
           if (code != null) {
-            _hasDetectedQR = true;
-            _startTimer();
-            await _cameraController!.startVideoRecording();
-            debugPrint('✅ QR Detected: $code');
-            qrVideoController.orderCode.value = code;
+            if (_hasDetectedQR) {
+              debugPrint('Check endcode');
+              if (code.trim() == 'endcode') {
+                timer.cancel();
+                _stopRecording();
+              }
+            } else {
+              // start record
+              await player.play(AssetSource('sound/start.mp3'));
+              _hasDetectedQR = true;
+              _startTimer();
+              await _cameraController!.startVideoRecording();
+              debugPrint('✅ QR Detected: $code');
+              qrVideoController.orderCode.value = code;
+            }
           }
         }
       } catch (e) {
@@ -130,6 +140,8 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   }
 
   Future<void> _stopRecording() async {
+    player.play(AssetSource('sound/end.mp3'));
+    int duration = _remainingSeconds;
     _remainingSeconds = 0;
     if (_cameraController == null || !_cameraController!.value.isRecordingVideo)
       return;
@@ -154,7 +166,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
             uploadedFile, _videoPath!.split('.').last);
 
         if (res != null) {
-          await qrVideoController.createOrder(res, orderCode);
+          await qrVideoController.createOrder(res, orderCode, duration);
         } else {
           Get.snackbar('Lỗi', 'Tải video thất bại',
               backgroundColor: Colors.red, colorText: Colors.white);

@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:unleash_proxy_client_flutter/unleash_context.dart';
 import 'package:unleash_proxy_client_flutter/unleash_proxy_client_flutter.dart';
 import 'bindings/root_binding.dart';
 import 'comon/data_center.dart';
+import 'controllers/unleash_controller.dart';
 import 'network/http_manager.dart';
 import 'routes/app_pages.dart';
 import 'services/api_service.dart';
@@ -14,11 +19,11 @@ Future<void> main() async {
   Get.put(HTTPManager(Dio()));
   Get.put(ApiService());
 
-  final unleash = UnleashClient(
-      url: Uri.parse('https://flag.dhn.io.vn/api/frontend'),
-      clientKey: '*:production.39f000ce4c6c0f81732d90929fd5ecea778b3de9d21f851dc33c6877',
-      appName: 'dohana-app');
-  unleash.start();
+  // Inject UnleashController vào GetX
+  final unleashController = Get.put(UnleashController());
+
+  // Khởi tạo Unleash
+  await unleashController.initUnleash();
 
   runApp(MyApp());
 }

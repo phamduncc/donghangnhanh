@@ -1,3 +1,5 @@
+import 'package:donghangnhanh/controllers/profile_controller.dart';
+import 'package:donghangnhanh/widget/price_package_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -13,6 +15,14 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  ProfileController controller = Get.put(ProfileController(apiService: Get.find()));
+
+  @override
+  void initState() {
+    controller.init();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,17 +43,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Icon(Icons.person, size: 40, color: Colors.grey),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'diep tran',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        controller.profile.value?.firstName ?? '',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'diep.tv1999@gmail.com',
+                        controller.profile.value?.email ?? '',
                         style: TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -81,45 +91,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
 
           // Free Package Section
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Gói miễn phí',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Hết hạn',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildVideoTypeItem(
-                  'Video đóng hàng',
-                  '0 video / 600 video/tháng',
-                ),
-                const SizedBox(height: 12),
-                _buildVideoTypeItem(
-                  'Video đơn vị vận chuyển',
-                  '0 video / 600 video/tháng',
-                ),
-                const SizedBox(height: 12),
-                _buildVideoTypeItem(
-                  'Video trả hàng',
-                  '0 video / 600 video/tháng',
-                ),
-              ],
+          // Container(
+          //   margin: const EdgeInsets.all(16),
+          //   padding: const EdgeInsets.all(16),
+          //   decoration: BoxDecoration(
+          //     color: Colors.blue[50],
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       const Row(
+          //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //         children: [
+          //           Text(
+          //             'Gói miễn phí',
+          //             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          //           ),
+          //           Text(
+          //             'Hết hạn',
+          //             style: TextStyle(color: Colors.red),
+          //           ),
+          //         ],
+          //       ),
+          //       const SizedBox(height: 16),
+          //       _buildVideoTypeItem(
+          //         'Video đóng hàng',
+          //         '0 video / 600 video/tháng',
+          //       ),
+          //       const SizedBox(height: 12),
+          //       _buildVideoTypeItem(
+          //         'Video đơn vị vận chuyển',
+          //         '0 video / 600 video/tháng',
+          //       ),
+          //       const SizedBox(height: 12),
+          //       _buildVideoTypeItem(
+          //         'Video trả hàng',
+          //         '0 video / 600 video/tháng',
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: PricePackageCard(
+              userPlan: controller.profile.value?.plan ?? 0, // or convert int values 0-3 to enum
+              expired: controller.profile.value?.expireLicenseDate != null ? DateTime.now().isAfter(controller.profile.value!.expireLicenseDate) : false,
+              expireLicenseDate: controller.profile.value?.expireLicenseDate,
+              storageAmount: (controller.storage.value?.amount ?? 0).toDouble(), // in bytes
+              storageLimitAmount: (controller.storage.value?.limitAmount ?? 0).toDouble(), // in MB
             ),
           ),
 
@@ -127,13 +147,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildMenuItem(
             icon: Icons.help_outline,
             title: 'Hướng dẫn sử dụng',
-            onTap: () {},
+            onTap: () async {
+              Uri url = Uri.parse(
+                  'https://wms.dohana.vn/instructions'); // Liên kết bạn muốn mở
+              await launchUrl(url);
+            },
           ),
-          _buildMenuItem(
-            icon: Icons.person_outline,
-            title: 'Tài khoản của tôi',
-            onTap: () {},
-          ),
+          // _buildMenuItem(
+          //   icon: Icons.person_outline,
+          //   title: 'Tài khoản của tôi',
+          //   onTap: () {},
+          // ),
           _buildMenuItem(
             icon: LucideIcons.gem,
             title: 'Gói giá tham khảo',

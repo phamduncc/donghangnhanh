@@ -8,6 +8,8 @@ import 'package:donghangnhanh/model/response/login_response.dart';
 import 'package:donghangnhanh/model/response/order_parcel_response.dart';
 import 'package:donghangnhanh/model/response/order_stats.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
+import 'package:donghangnhanh/model/response/profile_response.dart';
+import 'package:donghangnhanh/model/response/storage_response.dart';
 import 'package:donghangnhanh/model/response/store_response.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -36,6 +38,30 @@ class ApiService {
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201) {
       return LoginResponse.fromJson(res.data);
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Future<ProfileResponse> getMe() async {
+    final response = await _httpManager.get(
+      url: URLConstants.GET_ME,
+    );
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return ProfileResponse.fromJson(res.data);
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Future<StorageResponse> getStorage() async {
+    final response = await _httpManager.get(
+      url: URLConstants.GET_STORAGE,
+    );
+    var res = BaseApiResponse.fromJson(response);
+    if (res.code == 201 || res.code == 200) {
+      return StorageResponse.fromJson(res.data);
     } else {
       throw Exception('Failed to load data');
     }

@@ -1,5 +1,7 @@
 class URLConstants {
   static const String BASE_URL = 'https://be.dhn.io.vn';
+  static String GET_ME = '/dpm/v1/user/me';
+  static String GET_STORAGE = '/dpm/v1/file/storage';
   static String GET_ORDER_VIDEO(int page, int limit, String? orderCode) => '/dpm/v1/order/video/search?page=$page&limit=$limit&orderCode=$orderCode';
   static String GET_LIST_STORE = '/dpm/v1/user/store';
   static String AUTH_STORE(String id) => '/dpm/v1/auth/store/$id/switch';
