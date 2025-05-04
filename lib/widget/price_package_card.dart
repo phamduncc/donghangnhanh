@@ -43,7 +43,10 @@ class PricePackageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final double storageGb = storageAmount / (1024 * 1024 * 1024);
     final double limitGb = storageLimitAmount / 1024;
-    final double progressValue = (storageAmount * 100) / (storageLimitAmount * 1024 * 1024);
+    final double progressValue =
+        (storageLimitAmount != null && storageLimitAmount > 0)
+            ? (storageAmount * 100) / (storageLimitAmount * 1024 * 1024)
+            : 0.0;
 
     return Card(
       margin: const EdgeInsets.all(8),
@@ -61,9 +64,11 @@ class PricePackageCard extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -117,13 +122,15 @@ class PricePackageCard extends StatelessWidget {
                         'Ngày hết hạn',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
-                      expireLicenseDate != null ? Text(
-                        formatCreatedDate(expireLicenseDate!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ) : Container(),
+                      expireLicenseDate != null
+                          ? Text(
+                              formatCreatedDate(expireLicenseDate!),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            )
+                          : Container(),
                     ],
                   ),
                 ),
@@ -149,7 +156,7 @@ class PricePackageCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
-                    value: progressValue / 100,
+                    value: progressValue != null ? progressValue / 100 : 0,
                     minHeight: 4,
                     backgroundColor: Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(

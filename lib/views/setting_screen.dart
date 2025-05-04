@@ -15,7 +15,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  ProfileController controller = Get.put(ProfileController(apiService: Get.find()));
+  ProfileController controller =
+      Get.put(ProfileController(apiService: Get.find()));
 
   @override
   void initState() {
@@ -43,20 +44,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Icon(Icons.person, size: 40, color: Colors.grey),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        controller.profile.value?.firstName ?? '',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        controller.profile.value?.email ?? '',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
+                Obx(
+                  () => Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          controller.profile.value?.firstName ?? '',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          controller.profile.value?.email ?? '',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 IconButton(
@@ -79,7 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Get.find<StorageService>().clearData();
                               Navigator.pushReplacementNamed(context, '/login');
                             },
-                            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                            child: const Text('Đăng xuất',
+                                style: TextStyle(color: Colors.red)),
                           ),
                         ],
                       ),
@@ -132,14 +137,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           //     ],
           //   ),
           // ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: PricePackageCard(
-              userPlan: controller.profile.value?.plan ?? 0, // or convert int values 0-3 to enum
-              expired: controller.profile.value?.expireLicenseDate != null ? DateTime.now().isAfter(controller.profile.value!.expireLicenseDate) : false,
-              expireLicenseDate: controller.profile.value?.expireLicenseDate,
-              storageAmount: (controller.storage.value?.amount ?? 0).toDouble(), // in bytes
-              storageLimitAmount: (controller.storage.value?.limitAmount ?? 0).toDouble(), // in MB
+          Obx(
+            () => Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: PricePackageCard(
+                userPlan: controller.profile.value?.plan ?? 0,
+                // or convert int values 0-3 to enum
+                expired: controller.profile.value?.expireLicenseDate != null
+                    ? DateTime.now()
+                        .isAfter(controller.profile.value!.expireLicenseDate)
+                    : false,
+                expireLicenseDate: controller.profile.value?.expireLicenseDate,
+                storageAmount:
+                    (controller.storage.value?.amount ?? 0).toDouble(),
+                // in bytes
+                storageLimitAmount: (controller.storage.value?.limitAmount ?? 0)
+                    .toDouble(), // in MB
+              ),
             ),
           ),
 

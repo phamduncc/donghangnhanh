@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:donghangnhanh/controllers/qr_image_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:get/get.dart';
-import 'package:gallery_saver/gallery_saver.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
 class QrImageScreen extends StatefulWidget {
@@ -52,7 +52,7 @@ class _QrVideoScreenState extends State<QrImageScreen> {
     _cameraController = CameraController(
       rearCamera,
       ResolutionPreset.high,
-      enableAudio: true,
+      enableAudio: false,
     );
 
     try {
