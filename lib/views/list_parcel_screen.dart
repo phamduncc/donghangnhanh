@@ -206,7 +206,7 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${parcel.name}-${parcel.parcelCode ?? ''}',
+                                            parcel.name ?? '',
                                             style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold),

@@ -102,8 +102,8 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildInfoCard(
-                      'Đã tải lên',
-                      '1/1',
+                      'Nhập hàng',
+                      (controller.stats.value?.totalInbound ?? 0).toString(),
                       const Color(0xFFB4E0D7),
                       LucideIcons.uploadCloud,
                     ),
