@@ -17,6 +17,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:http_parser/http_parser.dart';
 
 import '../comon/url.dart';
+import '../model/response/list_response_model.dart';
 import '../network/http_manager.dart';
 
 class ApiService {
@@ -67,7 +68,7 @@ class ApiService {
     }
   }
 
-  Future<List<VideoOrder>?> getOrderVideo(
+  Future<ListResponse<VideoOrder>?> getOrderVideo(
       {required int page, required int limit, String? orderCode}) async {
     final response = await _httpManager.get(
       url: URLConstants.GET_ORDER_VIDEO(0, 10, orderCode ?? ''),
@@ -75,15 +76,16 @@ class ApiService {
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       Map<String, dynamic> listJson = res.data;
-      List<VideoOrder> listData =
-          ListVideoOrderResponse.fromJson(res.data).data ?? [];
-      return listData;
+      var listDataRes =
+          ListResponse.fromJson(listJson,
+                (json) => VideoOrder.fromJson(json),);
+      return listDataRes;
     } else {
       throw Exception('Failed to load data');
     }
   }
 
-  Future<List<OrderParcelResponse>?> getListParcel(
+  Future<ListResponse<OrderParcelResponse>?> getListParcel(
       {required int page, required int limit, String? name}) async {
     final response = await _httpManager.get(
       url: URLConstants.GET_LIST_PARCEL(0, 10, name ?? ''),
@@ -91,9 +93,9 @@ class ApiService {
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       Map<String, dynamic> listJson = res.data;
-      List<OrderParcelResponse> listData =
-          ListOrderParcelResponse.fromJson(res.data).data ?? [];
-      return listData;
+      var listDataRes = ListResponse.fromJson(listJson,
+            (json) => OrderParcelResponse.fromJson(json),);
+      return listDataRes;
     } else {
       throw Exception('Failed to load data');
     }
@@ -115,7 +117,7 @@ class ApiService {
     }
   }
 
-  Future<List<ParcelItem>?> getListParcelItems({
+  Future<ListResponse<ParcelItem>?> getListParcelItems({
     required int page,
     required int limit,
     String? orderCode,
@@ -127,9 +129,10 @@ class ApiService {
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
       Map<String, dynamic> listJson = res.data;
-      List<ParcelItem> listData =
-          ListParcelItemsResponse.fromJson(res.data).data ?? [];
-      return listData;
+      var listDataRes =
+      ListResponse.fromJson(listJson,
+            (json) => ParcelItem.fromJson(json),);
+      return listDataRes;
     } else {
       throw Exception('Failed to load data');
     }

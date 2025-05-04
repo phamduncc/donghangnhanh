@@ -42,11 +42,13 @@ class VideoDetailController extends GetxController {
       isLoading.value = true;
       final String? videoUrl = await _apiService.getUrlImage(fileName: videoId);
       if (videoUrl != null) {
+        isLoading.value = false;
         videoPlayerController.value = VideoPlayerController.network(videoUrl);
         await videoPlayerController.value!.initialize();
         update();
       }
     } catch (e) {
+      isLoading.value = false;
       print('Error loading video: $e');
     } finally {
       isLoading.value = false;

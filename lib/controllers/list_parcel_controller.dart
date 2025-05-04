@@ -13,33 +13,43 @@ class ListParcelController extends GetxController {
 
   // Trạng thái loading
   final RxBool isLoading = false.obs;
-
+  final RxBool isLoadingMore = false.obs;
   RxString shippingCompany = 'SPX'.obs;
-  RxInt size = 10.obs;
-  RxInt page = 0.obs;
-  RxInt totalPage = 0.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-  }
+  int total = 0;
+  int currentPage = 0;
+  int totalPages = 1;
+  RxString keySearch = ''.obs;
 
   // Hàm load danh sách đơn hàng
-  void loadParcels({String? keySearch}) async {
-    isLoading.value = true;
-    try {
-      var result = await apiService.getListParcel(
-        page: page.value,
-        limit: size.value,
-        name: keySearch,
-      );
-      if (result != null) {
-        parcels.assignAll(result);
+  void loadParcels() async {
+    currentPage = 0;
+    totalPages = 1;
+    parcels.clear();
+    loadMoreParcels();
+  }
+
+  void loadMoreParcels() async {
+    totalPages = (total/10).floor() + 1;
+    if (currentPage < totalPages || isLoadingMore.value) {
+      try {
+        isLoadingMore.value = true;
+        var result = await apiService.getListParcel(
+          page: currentPage,
+          limit: 10,
+          name: keySearch.value,
+        );
+        if (result?.data != null && result!.data.isNotEmpty) {
+          parcels.addAll(result.data);
+          total = result.total;
+          currentPage++;
+        } else {
+          totalPages = currentPage; // No more pages
+        }
+        isLoadingMore.value = false;
+      } catch (e) {
+        Get.snackbar('Error', 'Invalid credentials');
+        isLoadingMore.value = false;
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể tải danh sách đơn hàng');
-    } finally {
-      isLoading.value = false;
     }
   }
 

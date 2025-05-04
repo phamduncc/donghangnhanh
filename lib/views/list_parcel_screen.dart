@@ -16,10 +16,24 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
       Get.put(ListParcelController(apiService: Get.find()));
 
   TextEditingController parcelController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    controller.loadParcels();
+    _scrollController.addListener(listener);
+    super.initState();
+  }
+
+  void listener() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      controller.loadMoreParcels();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    controller.loadParcels();
     return Scaffold(
       // backgroundColor: const Color(0xFF1A2238),
       appBar: AppBar(
@@ -33,13 +47,6 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ],
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () => Get.offNamed("/"),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -114,21 +121,22 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                   child: const Text('Đóng'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (parcelController.text.isEmpty) {
                       Get.snackbar('Validate', 'Vui lòng nhập tên phân loại',
                           backgroundColor: Colors.red, colorText: Colors.white);
                       return;
                     } else {
                       Get.back();
-                      controller.createParcel(
+                      await controller.createParcel(
                           name: parcelController.text,
                           shippingCompany:
                               controller.shippingCompany.value ?? '');
+                      controller.loadParcels();
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE9B384),
+                    backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 12),
                   ),
@@ -174,99 +182,114 @@ class _ListParcelScreenState extends State<ListParcelScreen> {
                         ),
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(16),
-                        itemCount: controller.parcels.length,
+                        itemCount: controller.parcels.length + 1,
                         itemBuilder: (context, index) {
-                          final parcel = controller.parcels[index];
-                          return Container(
-                            margin: const EdgeInsets.only(
-                              bottom: 16,
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.local_shipping, size: 24),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${parcel.name}-${parcel.parcelCode ?? ''}',
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            'Đơn vị vận chuyển: ${parcel.shippingCompany}',
-                                            style: TextStyle(
-                                                color: Colors.grey[600]),
-                                          ),
-                                          Text(
-                                            'Số đơn: ${parcel.numItems}',
-                                            style: TextStyle(
-                                                color: Colors.grey[600]),
-                                          ),
-                                          Text(
-                                            'Ngày tạo: ${parcel.createdAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(parcel.createdAt!) : ''}',
-                                            style: TextStyle(
-                                                color: Colors.grey[600]),
-                                          ),
-                                        ],
+                          if (index < controller.parcels.length) {
+                            final parcel = controller.parcels[index];
+                            return Container(
+                              margin: const EdgeInsets.only(
+                                bottom: 16,
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.local_shipping,
+                                          size: 24),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${parcel.name}-${parcel.parcelCode ?? ''}',
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              'Đơn vị vận chuyển: ${parcel.shippingCompany}',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
+                                            ),
+                                            Text(
+                                              'Số đơn: ${parcel.numItems}',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
+                                            ),
+                                            Text(
+                                              'Ngày tạo: ${parcel.createdAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(parcel.createdAt!) : ''}',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        Get.toNamed('/list_parcel_item',
+                                      InkWell(
+                                        onTap: () {
+                                          Get.toNamed('/list_parcel_item',
+                                              arguments: parcel.id);
+                                        },
+                                        child: const Icon(
+                                            Icons.arrow_forward_ios,
+                                            color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        var res = await Get.toNamed('/qr_image',
                                             arguments: parcel.id);
+                                        if (res ?? false) {
+                                          controller.loadParcels();
+                                        }
                                       },
-                                      child: const Icon(Icons.arrow_forward_ios,
-                                          color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      var res = await Get.toNamed('/qr_image',
-                                          arguments: parcel.id);
-                                      if (res ?? false) {
-                                        controller.loadParcels();
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                    ),
-                                    child: const Text(
-                                      'Tạo đơn',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                      ),
+                                      child: const Text(
+                                        'Tạo đơn',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
+                                ],
+                              ),
+                            ); // Widget hiện tại của bạn
+                          } else {
+                            return Obx(() {
+                              return controller.isLoadingMore.value
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    )
+                                  : const SizedBox.shrink();
+                            });
+                          }
                         },
                       ),
               )),

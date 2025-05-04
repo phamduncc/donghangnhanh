@@ -9,34 +9,45 @@ class ListParcelItemController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxString error = ''.obs;
-  RxInt size = 1000.obs;
-  RxInt page = 0.obs;
-  RxInt totalPage = 0.obs;
+  final RxBool isLoadingMore = false.obs;
+  int total = 0;
+  int currentPage = 0;
+  int totalPages = 1;
   RxList<ParcelItem> parcelItems = <ParcelItem>[].obs;
   RxString filePath = ''.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-  }
+  RxString keySearch = ''.obs;
 
   // Hàm load danh sách đơn hàng
-  Future<void> loadParcelItems({String? keySearch, required parcelId}) async {
-    isLoading.value = true;
-    try {
-      var result = await apiService.getListParcelItems(
-        page: page.value,
-        limit: size.value,
-        parcelId: parcelId,
-        orderCode: keySearch,
-      );
-      if (result != null) {
-        parcelItems.assignAll(result);
+  Future<void> loadParcelItems({required parcelId}) async {
+    currentPage = 0;
+    totalPages = 1;
+    parcelItems.clear();
+    loadMoreParcelItems(parcelId: parcelId);
+  }
+
+  void loadMoreParcelItems({required parcelId}) async {
+    totalPages = (total/10).floor() + 1;
+    if (currentPage < totalPages || isLoadingMore.value) {
+      try {
+        isLoadingMore.value = true;
+        var result = await apiService.getListParcelItems(
+          page: currentPage,
+          limit: 10,
+          parcelId: parcelId,
+          orderCode: keySearch.value,
+        );
+        if (result?.data != null && result!.data.isNotEmpty) {
+          parcelItems.addAll(result.data);
+          total = result.total;
+          currentPage++;
+        } else {
+          totalPages = currentPage; // No more pages
+        }
+        isLoadingMore.value = false;
+      } catch (e) {
+        Get.snackbar('Error', 'Invalid credentials');
+        isLoadingMore.value = false;
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể tải danh sách đơn hàng');
-    } finally {
-      isLoading.value = false;
     }
   }
 
