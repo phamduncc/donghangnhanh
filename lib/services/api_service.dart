@@ -71,7 +71,7 @@ class ApiService {
   Future<ListResponse<VideoOrder>?> getOrderVideo(
       {required int page, required int limit, String? orderCode}) async {
     final response = await _httpManager.get(
-      url: URLConstants.GET_ORDER_VIDEO(0, 10, orderCode ?? ''),
+      url: URLConstants.GET_ORDER_VIDEO(page, limit, orderCode ?? ''),
     );
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
@@ -88,7 +88,7 @@ class ApiService {
   Future<ListResponse<OrderParcelResponse>?> getListParcel(
       {required int page, required int limit, String? name}) async {
     final response = await _httpManager.get(
-      url: URLConstants.GET_LIST_PARCEL(0, 10, name ?? ''),
+      url: URLConstants.GET_LIST_PARCEL(page, limit, name ?? ''),
     );
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
@@ -124,7 +124,7 @@ class ApiService {
     required parcelId,
   }) async {
     final response = await _httpManager.get(
-      url: URLConstants.GET_LIST_PARCEL_ITEM(0, 10, orderCode ?? '', parcelId),
+      url: URLConstants.GET_LIST_PARCEL_ITEM(page, limit, orderCode ?? '', parcelId),
     );
     var res = BaseApiResponse.fromJson(response);
     if (res.code == 201 || res.code == 200) {
