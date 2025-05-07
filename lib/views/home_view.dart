@@ -19,15 +19,23 @@ class HomeViewScreen extends StatefulWidget {
 
 class _HomeViewScreenState extends State<HomeViewScreen> {
   HomeController controller = Get.put(HomeController(apiService: Get.find()));
-  StoreController storeController = Get.put(StoreController(apiService: Get.find()));
-  final RefreshController _refreshController =
-  RefreshController(initialRefresh: false);
+  StoreController storeController =
+      Get.put(StoreController(apiService: Get.find()));
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     controller.getOrder();
     controller.getOrderStats();
+    _scrollController.addListener(listener);
     super.initState();
+  }
+
+  void listener() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      controller.loadMoreOrders();
+    }
   }
 
   @override
@@ -35,16 +43,13 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
     super.dispose();
   }
 
-  void _onRefresh() async{
+  void _onRefresh() async {
     controller.getOrder();
     controller.getOrderStats();
-    _refreshController.refreshCompleted();
   }
 
-  void _onLoading() async{
-    controller.getOrder();
-    controller.getOrderStats();
-    _refreshController.loadComplete();
+  void _onLoading() async {
+    controller.loadMoreOrders();
   }
 
   @override
@@ -63,128 +68,128 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
             ),
           ],
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white,),
-          onPressed: () => Get.offNamed("/"),
-        ),
       ),
-      body: SmartRefresher(
-        enablePullDown: true,
-        enablePullUp: true,
-        header: const WaterDropHeader(),
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        onLoading: _onLoading,
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Expanded(
-                    child: _buildInfoCard(
-                      'Trong ngày',
-                      (controller.stats.value?.totalInDay ?? 0).toString(),
-                      const Color(0xFFA8E6C3),
-                      LucideIcons.package,
-                    ),
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Expanded(
+                  child: _buildInfoCard(
+                    'Trong ngày',
+                    (controller.stats.value?.totalInDay ?? 0).toString(),
+                    const Color(0x00000000),
+                    LucideIcons.package,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildInfoCard(
-                      'Đóng hàng',
-                      (controller.stats.value?.totalPacking ?? 0).toString(),
-                      const Color(0xFFFFD888),
-                      LucideIcons.package,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Đóng hàng',
+                    (controller.stats.value?.totalPacking ?? 0).toString(),
+                    const Color(0xFFFFD888),
+                    LucideIcons.package,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildInfoCard(
-                      'Nhập hàng',
-                      (controller.stats.value?.totalInbound ?? 0).toString(),
-                      const Color(0xFFB4E0D7),
-                      LucideIcons.uploadCloud,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Nhập hàng',
+                    (controller.stats.value?.totalInbound ?? 0).toString(),
+                    const Color(0xFFB4E0D7),
+                    LucideIcons.uploadCloud,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            // Nút chọn cửa hàng
-            Padding(
-              padding:
-                  const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-              child: Obx(() => OutlinedButton(
-                    onPressed: () async {
-                      final result = await Get.toNamed('/store');
-                      if (result != null && result is Store) {
-                        storeController.selectStore(result.id);
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8), // Bo tròn các góc của nút
+          ),
+          // Nút chọn cửa hàng
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+            child: Obx(() => OutlinedButton(
+                  onPressed: () async {
+                    final result = await Get.toNamed('/store');
+                    if (result != null && result is Store) {
+                      storeController.selectStore(result.id);
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(8), // Bo tròn các góc của nút
+                    ),
+                    side: const BorderSide(color: Color(0xFFE14D16)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8.0),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      const Icon(Icons.store, color: Color(0xFF1A2238)),
+                      const SizedBox(width: 8),
+                      Text(
+                        storeController.activeStore.value?.name ??
+                            'Chọn cửa hàng',
+                        // style: const TextStyle(color: Colors.white),
                       ),
-                      side: const BorderSide(color: Color(0xFF1A2238)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8.0),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        const Icon(Icons.store, color: Color(0xFF1A2238)),
-                        const SizedBox(width: 8),
-                        Text(
-                          storeController.activeStore.value?.name ?? 'Chọn cửa hàng',
-                          // style: const TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  )),
-            ),
-            Padding(
+                    ],
+                  ),
+                )),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Tìm kiếm mã vận đơn',
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search, color: Colors.grey[600]),
+                ),
+                onChanged: (String val){
+                  controller.keySearch.value = val;
+                  controller.getOrder();
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Danh sách mã vận đơn',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    LucideIcons.refreshCcw,
+                    size: 18,
+                  ),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+          Obx(
+            () => Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm mã vận đơn',
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search, color: Colors.grey[600]),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Danh sách mã vận đơn',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.refreshCcw, size: 18,),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-            Obx(
-              () => Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: controller.orderVideoList.length,
-                  itemBuilder: (context, index) {
+                itemCount: controller.orderVideoList.length + 1,
+                itemBuilder: (context, index) {
+                  if (index < controller.orderVideoList.length) {
                     var order = controller.orderVideoList[index];
                     return InkWell(
                       onTap: () {
@@ -231,17 +236,6 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  // const Row(
-                                  //   children: [
-                                  //     Text('Video đóng hàng: '),
-                                  //     Text(
-                                  //       'Đã xoá',
-                                  //       style: TextStyle(color: Colors.blue),
-                                  //     ),
-                                  //     Icon(Icons.close,
-                                  //         size: 16, color: Colors.blue),
-                                  //   ],
-                                  // ),
                                   VideoTypeBadge(type: order.type),
                                 ],
                               ),
@@ -251,13 +245,22 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ); // Widget hiện tại của bạn
+                  } else {
+                    return Obx(() {
+                      return controller.isLoadingMore.value
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : const SizedBox.shrink();
+                    });
+                  }
+                },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -267,7 +270,10 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8.0),
       decoration: BoxDecoration(
-        color: color,
+        border: Border.all(
+          color: const Color(0xFFE14D16), // hoặc màu bất kỳ
+          width: 1,            // độ dày viền
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

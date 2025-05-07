@@ -59,7 +59,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     _cameraController = CameraController(
       rearCamera,
       ResolutionPreset.medium,
-      enableAudio: true,
+      enableAudio: false,
     );
 
     try {

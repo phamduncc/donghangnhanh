@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../controllers/list_parcel_item_controller.dart';
 
 class ListParcelItemScreen extends StatefulWidget {
-  ListParcelItemScreen({super.key});
+  const ListParcelItemScreen({super.key});
 
   @override
   State<ListParcelItemScreen> createState() => _ListParcelItemScreenState();
@@ -12,12 +12,24 @@ class ListParcelItemScreen extends StatefulWidget {
 
 class _ListParcelItemScreenState extends State<ListParcelItemScreen> {
   final String parcelId = Get.arguments as String;
+  final ScrollController _scrollController = ScrollController();
+  final controller = Get.put(ListParcelItemController(apiService: Get.find()));
+  @override
+  void initState() {
+    controller.loadParcelItems(parcelId: parcelId);
+    _scrollController.addListener(listener);
+    super.initState();
+  }
+
+  void listener() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      controller.loadMoreParcelItems(parcelId:parcelId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller =
-        Get.put(ListParcelItemController(apiService: Get.find()));
-    controller.loadParcelItems(parcelId: parcelId);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A2238),
@@ -76,56 +88,68 @@ class _ListParcelItemScreenState extends State<ListParcelItemScreen> {
             await controller.loadParcelItems(parcelId: parcelId);
           },
           child: ListView.builder(
-            itemCount: controller.parcelItems.length,
+            controller: _scrollController,
+            itemCount: controller.parcelItems.length+1,
             padding: const EdgeInsets.all(16),
             itemBuilder: (context, index) {
-              final item = controller.parcelItems[index];
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Mã đơn hàng: ${item.orderCode}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+              if (index < controller.parcelItems.length) {
+                final item = controller.parcelItems[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mã đơn hàng: ${item.orderCode}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Ngày tạo: ${DateFormat('dd/MM/yyyy HH:mm').format(item.createdAt)}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
+                              const SizedBox(height: 8),
+                              Text(
+                                'Ngày tạo: ${DateFormat('dd/MM/yyyy HH:mm').format(item.createdAt)}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            controller.viewParcelImage(item.metadata.filename ?? ''),
-                        icon: const Icon(Icons.image),
-                        label: const Text('Xem ảnh'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                        ElevatedButton.icon(
+                          onPressed: () =>
+                              controller.viewParcelImage(item.metadata.filename ?? ''),
+                          icon: const Icon(Icons.image),
+                          label: const Text('Xem ảnh'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
+                );// Widget hiện tại của bạn
+              } else {
+                return Obx(() {
+                  return controller.isLoadingMore.value
+                      ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
+                        child: CircularProgressIndicator()),
+                  )
+                      : const SizedBox.shrink();
+                });
+              }
             },
           ),
         );

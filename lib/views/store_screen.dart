@@ -19,7 +19,7 @@ class StoreScreen extends GetView<StoreController> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white,),
-          onPressed: () => Get.offNamed("/"),
+          onPressed: () => Get.back(),
         ),
       ),
       body: Column(
