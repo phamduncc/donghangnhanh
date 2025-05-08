@@ -60,6 +60,7 @@ dependencies:
   unleash_proxy_client_flutter: ^1.9.6
   package_info_plus: ^8.3.0
   audioplayers: ^5.2.0
+  firebase_core: ^2.31.0
 
 dependency_overrides:
   flutter_plugin_android_lifecycle: ^2.0.12

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1019392257078",
+    "project_id": "dhn-project-9535f",
+    "storage_bucket": "dhn-project-9535f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019392257078:android:14f01f29c688a4c7fefc97",
+        "android_client_info": {
+          "package_name": "com.dohana.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyj0m1kk4ULmvuFjgeCmnX6J09cJaWWK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

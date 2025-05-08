@@ -54,6 +54,7 @@ class QrVideoController extends GetxController {
         updateStorage: true,
         startTime: data.createdAt,
         duration: duration,
+        source: 'mobile'
       ),
     );
     if (response != null) {
@@ -129,7 +130,7 @@ class QrVideoController extends GetxController {
           options: Options(
             headers: {
               'Authorization': null,
-              'Content-Type': 'video/mp4',
+              'Content-Type': 'application/octet-stream',
               Headers.contentLengthHeader: fileSize,
             },
           ),

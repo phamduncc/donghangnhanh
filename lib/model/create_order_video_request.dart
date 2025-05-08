@@ -10,6 +10,7 @@ class CreateOrderVideoRequest{
   bool? updateStorage;
   DateTime? startTime;
   int? duration;
+  String? source;
 
   CreateOrderVideoRequest({
     this.orderCode,
@@ -19,6 +20,7 @@ class CreateOrderVideoRequest{
     this.prepareCode,
     this.startTime,
     this.updateStorage,
+    this.source,
   });
 
   // Factory constructor to create an instance from JSON

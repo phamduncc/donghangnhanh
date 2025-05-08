@@ -18,6 +18,7 @@ CreateOrderVideoRequest _$CreateOrderVideoRequestFromJson(
           ? null
           : DateTime.parse(json['startTime'] as String),
       updateStorage: json['updateStorage'] as bool?,
+      source: json['source'] as String?,
     );
 
 Map<String, dynamic> _$CreateOrderVideoRequestToJson(
@@ -30,4 +31,5 @@ Map<String, dynamic> _$CreateOrderVideoRequestToJson(
       'updateStorage': instance.updateStorage,
       'startTime': instance.startTime?.toIso8601String(),
       'duration': instance.duration,
+      'source': instance.source,
     };

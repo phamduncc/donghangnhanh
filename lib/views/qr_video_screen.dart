@@ -1,13 +1,23 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../controllers/qr_video_controller.dart';
+
+final _orientations = {
+  DeviceOrientation.portraitUp: 0,
+  DeviceOrientation.landscapeLeft: 90,
+  DeviceOrientation.portraitDown: 180,
+  DeviceOrientation.landscapeRight: 270,
+};
 
 class QrVideoScreen extends StatefulWidget {
   const QrVideoScreen({super.key});
@@ -31,6 +41,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
   double _minZoom = 1.0;
   double _maxZoom = 1.0;
   double _currentZoom = 1.0;
+  int _frameCount = 0;
 
   @override
   void initState() {
@@ -60,6 +71,9 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
       rearCamera,
       ResolutionPreset.medium,
       enableAudio: false,
+      imageFormatGroup: Platform.isAndroid
+          ? ImageFormatGroup.nv21
+          : ImageFormatGroup.bgra8888,
     );
 
     try {
@@ -74,49 +88,138 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
         _isRecording = true;
         _isCameraInitialized = true;
       });
-      _scanQrPeriodically();
+      _cameraController!.startImageStream(_scanQrPeriodically);
     } catch (e) {
       debugPrint('❌ Error initializing camera or starting recording: $e');
     }
   }
 
-  void _scanQrPeriodically() {
-    Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!_isRecording || !_cameraController!.value.isInitialized) {
-        timer.cancel();
+  InputImageRotation _rotationIntToImageRotation(int rotation) {
+    debugPrint(rotation.toString());
+    switch (rotation) {
+      case 0:
+        return InputImageRotation.rotation0deg;
+      case 90:
+        return InputImageRotation.rotation90deg;
+      case 180:
+        return InputImageRotation.rotation180deg;
+      case 270:
+        return InputImageRotation.rotation270deg;
+      default:
+        throw Exception("Không hỗ trợ rotation: $rotation");
+    }
+  }
+
+  InputImage? _inputImageFromCameraImage(CameraImage image) {
+    if (_cameraController == null) return null;
+
+    // get image rotation
+    // it is used in android to convert the InputImage from Dart to Java: https://github.com/flutter-ml/google_ml_kit_flutter/blob/master/packages/google_mlkit_commons/android/src/main/java/com/google_mlkit_commons/InputImageConverter.java
+    // `rotation` is not used in iOS to convert the InputImage from Dart to Obj-C: https://github.com/flutter-ml/google_ml_kit_flutter/blob/master/packages/google_mlkit_commons/ios/Classes/MLKVisionImage%2BFlutterPlugin.m
+    // in both platforms `rotation` and `camera.lensDirection` can be used to compensate `x` and `y` coordinates on a canvas: https://github.com/flutter-ml/google_ml_kit_flutter/blob/master/packages/example/lib/vision_detector_views/painters/coordinates_translator.dart
+    final sensorOrientation = _cameraController!.description.sensorOrientation;
+    // print(
+    //     'lensDirection: ${camera.lensDirection}, sensorOrientation: $sensorOrientation, ${_controller?.value.deviceOrientation} ${_controller?.value.lockedCaptureOrientation} ${_controller?.value.isCaptureOrientationLocked}');
+    InputImageRotation? rotation;
+    if (Platform.isIOS) {
+      rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
+    } else if (Platform.isAndroid) {
+      var rotationCompensation =
+      _orientations[_cameraController!.value.deviceOrientation];
+      if (rotationCompensation == null) return null;
+      if (_cameraController!.description.lensDirection == CameraLensDirection.front) {
+        // front-facing
+        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+      } else {
+        // back-facing
+        rotationCompensation =
+            (sensorOrientation - rotationCompensation + 360) % 360;
+      }
+      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
+      // print('rotationCompensation: $rotationCompensation');
+    }
+    if (rotation == null) return null;
+    // print('final rotation: $rotation');
+
+    // get image format
+    final format = InputImageFormatValue.fromRawValue(image.format.raw);
+    // validate format depending on platform
+    // only supported formats:
+    // * nv21 for Android
+    // * bgra8888 for iOS
+    if (format == null ||
+        (Platform.isAndroid && format != InputImageFormat.nv21) ||
+        (Platform.isIOS && format != InputImageFormat.bgra8888)) {
+      return null;
+    }
+
+    // since format is constraint to nv21 or bgra8888, both only have one plane
+    if (image.planes.length != 1) return null;
+    final plane = image.planes.first;
+
+    // compose InputImage using bytes
+    return InputImage.fromBytes(
+      bytes: plane.bytes,
+      metadata: InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: rotation, // used only in Android
+        format: format, // used only in iOS
+        bytesPerRow: plane.bytesPerRow, // used only in iOS
+      ),
+    );
+  }
+
+  void _scanQrPeriodically(CameraImage img) async {
+    if (img == null || img.planes.isEmpty) return;
+    // Skip frame để giảm tải
+    _frameCount++;
+    if (_frameCount % 5 != 0) return;
+    if (!_isRecording || !_cameraController!.value.isInitialized) {
+      return;
+    }
+
+    try {
+      // final WriteBuffer allBytes = WriteBuffer();
+      // for (final Plane plane in img.planes) {
+      //   allBytes.putUint8List(plane.bytes);
+      // }
+      // final bytes = allBytes.done().buffer.asUint8List();
+      // debugPrint((InputImageFormatValue.fromRawValue(img.format.raw) ?? InputImageFormat.nv21).name);
+      //
+      // if (bytes.isEmpty) {
+      //   print('Ảnh không có dữ liệu hoặc không hợp lệ!');
+      //   return;
+      // }
+      final inputImage = _inputImageFromCameraImage(img);
+      if (inputImage == null) {
+        debugPrint('Khong co anh');
         return;
       }
+      final barcodes = await _barcodeScanner.processImage(inputImage);
 
-      try {
-        final file = await _cameraController!.takePicture();
-        final inputImage = InputImage.fromFilePath(file.path);
-        final barcodes = await _barcodeScanner.processImage(inputImage);
-
-        if (barcodes.isNotEmpty) {
-          final barcode = barcodes.first;
-          final code = barcode.rawValue;
-          if (code != null) {
-            if (_hasDetectedQR) {
-              debugPrint('Check endcode');
-              if (code.trim() == 'endcode') {
-                timer.cancel();
-                _stopRecording();
-              }
-            } else {
-              // start record
-              await player.play(AssetSource('sound/start.mp3'));
-              _hasDetectedQR = true;
-              _startTimer();
-              await _cameraController!.startVideoRecording();
-              debugPrint('✅ QR Detected: $code');
-              qrVideoController.orderCode.value = code;
+      if (barcodes.isNotEmpty) {
+        final barcode = barcodes.first;
+        final code = barcode.rawValue;
+        if (code != null) {
+          if (_hasDetectedQR) {
+            debugPrint('Check endcode');
+            if (code.trim() == 'endcode') {
+              _stopRecording();
             }
+          } else {
+            // start record
+            await player.play(AssetSource('sound/start.mp3'));
+            _hasDetectedQR = true;
+            _startTimer();
+            await _cameraController!.startVideoRecording();
+            debugPrint('✅ QR Detected: $code');
+            qrVideoController.orderCode.value = code;
           }
         }
-      } catch (e) {
-        debugPrint('❌ QR scan error: $e');
       }
-    });
+    } catch (e) {
+      debugPrint('❌ QR scan error: $e');
+    }
   }
 
   void _startTimer() {
@@ -142,6 +245,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
     player.play(AssetSource('sound/end.mp3'));
     int duration = _remainingSeconds;
     _remainingSeconds = 0;
+    _hasDetectedQR = false;
     if (_cameraController == null || !_cameraController!.value.isRecordingVideo)
       return;
 
@@ -149,6 +253,7 @@ class _QrVideoScreenState extends State<QrVideoScreen> {
       String? _videoPath;
       String orderCode = qrVideoController.orderCode.value;
       final file = await _cameraController!.stopVideoRecording();
+      print(file.path);
       setState(() {
         _isRecording = false;
         _videoPath = file.path;

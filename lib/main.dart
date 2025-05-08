@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
   // Khởi tạo Unleash
   await unleashController.initUnleash();
 
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
