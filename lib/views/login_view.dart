@@ -11,9 +11,17 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  final controller = Get.put<LoginController>(LoginController(apiService: Get.find()));
+
+  @override
+  void initState() {
+    super.initState();
+
+    controller.loadData();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<LoginController>();
     final _formKey = GlobalKey<FormState>();
     bool _isLoading = false;
 

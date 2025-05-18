@@ -128,7 +128,7 @@ class HTTPManager {
     Options? options,
   }) async {
     developer.log("POST URL ${URLConstants.BASE_URL}$url", );
-    developer.log("DATA ${const JsonEncoder().convert(data)}", );
+    debugPrint("DATA ${const JsonEncoder().convert(data)}", );
     // UtilLogger.log("DATA", JsonEncoder().convert(data));
     try {
       final response = await _dio.post(

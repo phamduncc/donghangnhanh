@@ -29,8 +29,8 @@ class VideoOrder {
   final int duration;
   final String startTime;
   final String orderCode;
-  final String prepareCode;
-  final String metadataId;
+  final String? prepareCode;
+  final String? metadataId;
   final String? metadataCam2Id;
   final String? metadataCompleteId;
   final String status;
@@ -43,11 +43,11 @@ class VideoOrder {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? deletedAt;
-  final String deletedTimeline;
-  final String createdBy;
+  final String? deletedTimeline;
+  final String? createdBy;
   final String? driveLink;
   final String? convertTime;
-  final Metadata metadata;
+  final Metadata? metadata;
   final User user;
 
   VideoOrder({

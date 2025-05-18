@@ -32,8 +32,8 @@ VideoOrder _$VideoOrderFromJson(Map<String, dynamic> json) => VideoOrder(
       duration: (json['duration'] as num).toInt(),
       startTime: json['startTime'] as String,
       orderCode: json['orderCode'] as String,
-      prepareCode: json['prepareCode'] as String,
-      metadataId: json['metadataId'] as String,
+      prepareCode: json['prepareCode'] as String?,
+      metadataId: json['metadataId'] as String?,
       metadataCam2Id: json['metadataCam2Id'] as String?,
       metadataCompleteId: json['metadataCompleteId'] as String?,
       status: json['status'] as String,
@@ -46,11 +46,13 @@ VideoOrder _$VideoOrderFromJson(Map<String, dynamic> json) => VideoOrder(
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       deletedAt: json['deletedAt'] as String?,
-      deletedTimeline: json['deletedTimeline'] as String,
-      createdBy: json['createdBy'] as String,
+      deletedTimeline: json['deletedTimeline'] as String?,
+      createdBy: json['createdBy'] as String?,
       driveLink: json['driveLink'] as String?,
       convertTime: json['convertTime'] as String?,
-      metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
+      metadata: json['metadata'] == null
+          ? null
+          : Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
       user: User.fromJson(json['user'] as Map<String, dynamic>),
     );
 
@@ -79,7 +81,7 @@ Map<String, dynamic> _$VideoOrderToJson(VideoOrder instance) =>
       'createdBy': instance.createdBy,
       'driveLink': instance.driveLink,
       'convertTime': instance.convertTime,
-      'metadata': instance.metadata.toJson(),
+      'metadata': instance.metadata?.toJson(),
       'user': instance.user.toJson(),
     };
 

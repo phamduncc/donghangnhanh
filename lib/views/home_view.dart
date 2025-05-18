@@ -193,11 +193,13 @@ class _HomeViewScreenState extends State<HomeViewScreen> {
                     var order = controller.orderVideoList[index];
                     return InkWell(
                       onTap: () {
-                        Get.offNamed('/video_detail', arguments: {
-                          "videoId": order.metadata.filename,
-                          "orderType": order.type,
-                          "orderCode": order.orderCode,
-                        });
+                        if (order.metadata != null) {
+                          Get.offNamed('/video_detail', arguments: {
+                            "videoId": order.metadata?.filename,
+                            "orderType": order.type,
+                            "orderCode": order.orderCode,
+                          });
+                        }
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 16),

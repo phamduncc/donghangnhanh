@@ -58,5 +58,7 @@
     </array>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Chúng tôi cần truy cập vị trí của bạn để gửi thông báo.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Granting access will allow you to use face id in this application</string>
 </dict>
 </plist>

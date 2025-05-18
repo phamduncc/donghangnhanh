@@ -1,3 +1,4 @@
+import 'package:credentials_manager/credentials_manager.dart';
 import 'package:donghangnhanh/comon/data_center.dart';
 import 'package:donghangnhanh/model/login_request.dart';
 import 'package:donghangnhanh/network/http_manager.dart';
@@ -10,8 +11,20 @@ class LoginController extends GetxController {
 
   LoginController({required this.apiService});
 
-  final TextEditingController usernameController = TextEditingController(text: "phamdu180199@gmail.com");
-  final TextEditingController passwordController = TextEditingController(text:"Cntt@123456");
+  final TextEditingController usernameController = TextEditingController(text: "");
+  final TextEditingController passwordController = TextEditingController(text:"");
+
+  Future<void> loadData() async {
+    try {
+      CredentialModel? user = await Get.find<StorageService>().getLoginData();
+      if (user != null) {
+        usernameController.text = user!.loginOrEmail;
+        passwordController.text = user!.password;
+      }
+    } catch (e) {
+      debugPrint('$e');
+    }
+  }
 
   Future<void> login() async {
     try{
@@ -26,6 +39,16 @@ class LoginController extends GetxController {
         await Get.find<StorageService>().saveRefreshToken(result.refreshToken);
         await Get.find<StorageService>().saveUsername(usernameController.text);
         Get.find<HTTPManager>().updateToken(result.token);
+
+        final credentialModel = CredentialModel(
+          id: usernameController.text, // REQUIRED
+          loginOrEmail: usernameController.text, // REQUIRED
+          password: passwordController.text, // REQUIRED
+        );
+
+        /// Saving credential.
+        await Get.find<StorageService>().saveLoginData(credentialModel);
+
         Get.offNamed('/');
       }
     } catch(e) {

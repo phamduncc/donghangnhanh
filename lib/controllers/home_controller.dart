@@ -1,5 +1,6 @@
 import 'package:donghangnhanh/model/response/order_stats.dart';
 import 'package:donghangnhanh/model/response/order_video_reponse.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 
@@ -34,7 +35,8 @@ class HomeController extends GetxController {
           totalPages = currentPage; // No more pages
         }
         isLoadingMore.value = false;
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('StackTrace:\n$stackTrace');
         Get.snackbar('Error', 'Invalid credentials');
         isLoadingMore.value = false;
       }
